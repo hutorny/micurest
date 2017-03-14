@@ -1,0 +1,66 @@
+@CHARSET "UTF-8";
+#msgbox {
+	position:absolute;
+	left: calc(50% - 12em);
+	width: 24em;
+	height: 4em;
+	line-height: 4em;
+	text-align: center;
+	top : 30%;
+	font-size: 2em;
+    background-color: #ffff99 !important;
+    background-image: -moz-linear-gradient(top , #ffff99, #ffffCC, #ffff33) !important;
+    background-image: -webkit-linear-gradient(top , #ffff99, #ffffCC, #ffff33) !important;
+    background-image: -o-linear-gradient(top , #ffff99, #ffffCC, #ffff33) !important;
+    background-image: -ms-linear-gradient(top , #ffff99, #ffffCC, #ffff33) !important;
+    border-radius: 4px;
+}
+
+#msgbox> span:empty:before {
+    content: 'This site requires JavaScript ES6';
+}
+#msgbox > #c {
+	display: none;
+}
+#msgbox {
+	opacity: 1;
+	animation-name: fadein;
+	animation-iteration-count: 1;
+	animation-timing-function: ease-in;
+	animation-duration: 3s;
+}
+
+#msgbox > span {
+	color: #1A0600;
+	line-height: 4em;
+}
+
+@keyframes fadein {
+	  0% { opacity: 0; }
+	 20% { opacity: 0; }
+	 40% { opacity: 0; }
+	 60% { opacity: 0; }
+	 80% { opacity: 0.5; }
+	100% { opacity: 1; }
+}	
+body iframe { 
+	border: 0; 
+	width: 100%; 
+	height: 100%; 
+	overflow-x: hidden;
+	display: none;
+	opacity: 1;
+	animation-name: popup;
+	animation-iteration-count: 1;
+	animation-timing-function: ease-in;
+	animation-duration: 0.2s;
+}
+@keyframes popup {
+	  0% { opacity: 0; }
+	100% { opacity: 1; }
+}
+
+html, body {
+	margin:0;
+	height: 100%;
+}
