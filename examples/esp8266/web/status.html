@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>ESP8266 Control Panel > Status</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="&#x3BC;cuREST Demo">
+    <meta name="author" content="">
+    <base href="//r.iot-ware.com/v/">
+	<link rel="stylesheet" href="css/responsive.css">
+	<link rel="stylesheet" href="css/style.css">
+    <link rel="shortcut icon" href="//r.iot-ware.com/v/favicon.ico">
+  </head>
+</head>
+<body>
+<div id="container">
+	<div class="main-nav">
+		<ul id="menu-top" class="menu">
+			<li id="menu-item-status" class="menu menu-item"><a href="/status" target="_top">Status</a></li>
+			<li id="menu-item-setup" class="menu menu-item"><a href="/setup" target="_top">Setup</a></li>
+			<li id="menu-item-gpio" class="menu menu-item"><a href="/gpio" target="_top">GPIO</a></li>
+			<li id="menu-item-demo" class="menu menu-item"><a href="/demo" target="_top">Demo</a></li>
+			<li id="menu-item-none" class="menu menu-item"><span>&nbsp;</span></li>
+			<li id="menu-item-about" class="menu menu-item"><a href="about.html" target="_top" id="about">About</a></li>
+		</ul>
+	</div>
+	<!--  form id="actions" class="nomargin" -->	
+	<h2 id="actions"><a>Status</a>
+		<span id="formactions" class="formactions">
+			<button id="mcu_restart" class="" style="display: block">Restart</button>
+		</span>	
+	</h2>
+	<!-- /form -->
+	<fieldset class="info">
+		<legend><label>System</label></legend>		
+		<table id="sysinfo">
+			<tr><td colspan="2">Host Name</td><td id="hostname" class="w16em">-</td></tr>
+			<tr><td colspan="2">SDK Version</td><td id="sdk_version">-</td></tr>
+			<tr><td colspan="2">Chip ID</td><td id="chip_id">-</td></tr>
+			<tr><td colspan="2">Boot Version</td><td id="boot_version">-</td></tr>
+			<tr><td colspan="2">Boot Mode</td><td id="boot_mode">-</td></tr>
+			<tr><td colspan="2">WiFi Mode</td><td id="wifi_mode">-</td></tr>
+			<tr><td colspan="2">CPU Frequency (MHz)</td><td id="cpu_freq">-</td></tr>
+			<tr><td>System Time</td>
+				<td rowspan="4" class="autoupdate">
+					<input type="checkbox" id="autoupdate" class="checkbox hidden-input">
+					<label class="checkbox" for="autoupdate">Autoupdate</label></td>
+				<td id="time">-</td></tr>
+			<tr><td>Real Time Clock</td><td id="rtclock">-</td></tr>
+			<tr><td>SNTP Time</td><td id="sntptime">-</td></tr>
+			<tr><td>Free Heap Size (bytes)</td><td id="free_heap">-</td></tr>
+		</table>
+	</fieldset>
+	<div id="interfaces">
+	<fieldset class="info" id="interface">
+		<legend><label>Interface</label> [ <span id="name"></span> ] </legend>
+		<table id="ifdetails">
+			<tr><td>IP Addr</td><td id="ip" class="w16em"></td></tr>
+			<tr><td>Mask</td><td id="mask"></td></tr>
+			<tr><td>Gateway</td><td id="gw"></td></tr>
+			<tr><td>MAC Addr</td><td id="mac"></td></tr>
+		</table>
+	</fieldset>
+	</div>
+</div>
+<div id="copyright">Copyright &copy; 2017 Eugene Hutorny <span id="copyright-email">@</span></div>
+</body>
+<script type="text/javascript" src="js/pure.js"></script>
+<script type="text/javascript" src="js/micu.js"></script>
+<script>
+var UI;
+document.mcumodel = null;
+
+window.onload = function() {
+	UI = new UIStatus();
+
+	UI.directives.sysinfo = {
+		'#hostname'		: 'hostname',
+		'#sdk_version'  : 'sdk_version',
+		'#boot_version' : 'boot_version',
+		'#chip_id' 		: 'chip_id',
+		'#boot_mode' 	: 'boot_mode',
+		'#wifi_mode' 	: 'wifi_mode',
+		'#cpu_freq'		: 'cpu_freq',
+		'#rtclock' 		: 'rtdata.rtclock',
+		'#sntptime' 	: 'rtdata.sntptime',
+		'#time' 		: 'rtdata.time',
+		'#free_heap'	: 'rtdata.free_heap_size'
+	};
+	UI.directives.rtdata = {
+		'#rtclock' 		: 'rtclock',
+		'#time' 		: 'time',
+		'#sntptime'		: 'sntptime',
+		'#free_heap'	: 'free_heap_size'
+	};
+	UI.directives.interfaces = {
+ 		'#interface' : {
+			'ifc <- interfaces' 	: {
+				'#name'			: 'ifc.pos',
+				'#ip'			: 'ifc.addr',
+				'#mask'			: 'ifc.mask',
+				'#gw'			: 'ifc.gw',
+				'#mac'			: 'ifc.mac',
+			} 			
+	 	}	
+	};
+	UI.controls.about = '#about';
+	UI.init();
+	if( document.mcumodel ) {
+		UI.render(document.mcumodel);
+		delete document.mcumodel;
+	}
+};
+
+function render(model) {
+	if( UI )
+		UI.render(model);
+	else
+		document.mcumodel = model;
+};
+</script>
+</html>

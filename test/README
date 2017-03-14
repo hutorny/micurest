@@ -1,0 +1,149 @@
+This folder contains cojson tests.
+
+Tests overview
+
+	001. writing integer limits
+	002. writing array, object, string
+	003. writing pod object, encapsulated object, dynamic object
+	004. writing extern C objects
+	005. writing values with only setter or only getter  
+	030. reading plain values
+	031. reading strings
+	032. reading homogeneous arrays
+	033. reading heterogeneous arrays 
+	034. reading values with overflows
+	035. reading JSON objects
+	036. reading POD objects
+	070. wchar_t tests
+	071. char16_t tests
+	072. char32_t tests
+	080. benchamrking test
+	081. code size metrics
+	100. extensive write_double test
+	101. double/float
+	102. writing double values
+
+Folder structure
+
+	./suites 			- collection of tests
+		basic			- tests runnable on all platforms
+			*.cpp		- test files
+			*.inc		- test master data
+		bench			- benchmarking tests
+		host			- tests runnable on host only
+		metric			- code size metrics
+		wchar			- wchar tests 
+	./tools				- test environment and tools
+		arduino.cpp		- test runner for Arduino environment
+		common.hpp		- common test environment headers
+		host.hpp		- host-based test environment
+		mcu-env.hpp		- mcu common test environment 
+		sim-avr.hpp		- sim-avr platform specific test environment 
+		teensy.hpp		- teensy platform specific test environment
+		test.hpp		- test-related headers
+		host.cpp		- test runner for host environment
+		msp430fr.cpp	- test runner for msp430fr* (incomplete)
+		pic32mx.cpp		- test runner for pic32mx* (incomplete)
+
+Building tests for Arduino Mega 
+1. Download and install Arduino Studio https://www.arduino.cc/en/Main/Software
+2. Link missing c++ includes
+ # ln -s /usr/include/c++/4.9/limits ../include/
+ # ln -s /usr/include/c++/4.9/type_traits ../include/
+3. Run make, using actual path to Arduino Studio
+ # make mega ARDUINO-DIR=/opt/arduino/hardware/arduino/avr/cores/arduino/     \
+   VARIANT-DIR=/opt/arduino/hardware/arduino/avr/variants/mega
+4. It will create mega.vars file with these build variables and next time you
+   ran make simpler: make mega
+5. Build test goals as necessary:
+ # make mega megaa  megab  megam
+6. Upon success elf and hex files are placed in bin/ directory 
+
+Building tests for Teensy 3.1
+1. Download and install Arduino Studio https://www.arduino.cc/en/Main/Software
+   (note, Teensyduino may not be supporting latest  Arduino Studio) 
+2. Download and install Teensyduino https://www.pjrc.com/teensy/td_download.html
+3. Download and install gcc-arm- https://launchpad.net/gcc-arm-embedded/+download
+4. Run make, using actual path to Arduino Studio
+ # make teensy3 ARDUINO-DIR=/opt/arduino/hardware/teensy/avr/cores/teensy3
+
+Building tests for esp8266
+1. Download and build esp-open sdk https://github.com/pfalcon/esp-open-sdk
+2. Run make, using actual path to ESP8266_NONOS_SDK
+ # make esp8266 esp8266a SDK-DIR=/opt/esp-open-sdk/ESP8266_NONOS_SDK_V1.5.4_16_05_20
+
+
+Code size metrics are available in *.metrics.txt
+To build your own metrics, remove corresponding .metrics.txt file and run
+ # make teensy3 metrics
+or 
+ # make mega metrics
+ 
+Host (i686 @ 3066 MHz) -O3
+bin/host -b=100000 114
+	'080.cpp:0' "benchmarking: reading single nested property"
+		100000 loops complete in   73 ms
+bin/host -b=100000 115
+	'080.cpp:1' "benchmarking: reading/writing array[3] of double"
+		100000 loops complete in  140 ms
+bin/host -b=100000 116
+	'080.cpp:2' "benchmarking: reading/writing custom type"
+		100000 loops complete in  240 ms
+bin/host -b=100000 117
+	'080.cpp:3' "benchmarking: writing Config" (208 JSON entries)
+		100000 loops complete in 1500 ms
+bin/host -b=100000 118
+	'080.cpp:4' "benchmarking: reading Config" (60 json entries)
+		100000 loops complete in 2300 ms
+
+OpenWrt (AR9330 @ 400 MHz) -O3
+bin/host -b=100000 114
+	'080.cpp:0' "benchmarking: reading single nested property"
+		1000 loops complete in   18 ms
+bin/host -b=100000 115
+	'080.cpp:1' "benchmarking: reading/writing array[3] of double"
+		1000 loops complete in  250 ms
+bin/host -b=100000 116
+	'080.cpp:2' "benchmarking: reading/writing custom type"
+		1000 loops complete in   45 ms
+bin/host -b=100000 117
+	'080.cpp:3' "benchmarking: writing Config" (208 JSON entries)
+		1000 loops complete in  251 ms
+bin/host -b=100000 118
+	'080.cpp:4' "benchmarking: reading Config" (60 json entries)
+		1000 loops complete in  617 ms
+
+
+Teensy3.1 (cortex-m4  @ 72 MHz) -Os
+:114 b
+	'080.cpp:0' "benchmarking: reading single nested property"
+		1000 loops complete in  120 ms
+:115 b
+	'080.cpp:1' "benchmarking: reading/writing array[3] of double"
+		1000 loops complete in  652 ms
+:116 b
+	'080.cpp:2' "benchmarking: reading/writing custom type"
+		1000 loops complete in  268 ms
+:117 b
+	'080.cpp:3' "benchmarking: writing Config" (208 JSON entries)
+		1000 loops complete in 1378 ms
+:117 b
+	'080.cpp:4' "benchmarking: reading Config" (60 json entries)
+		1000 loops complete in 3350 ms
+
+Arduino Mega (atmega2560  @ 16 MHz) -Os
+:0 b
+	'080.cpp:0' "benchmarking: reading single nested property"
+		1000 loops complete in  1140 ms
+:1 b
+	'080.cpp:1' "benchmarking: reading/writing array[3] of double"
+		1000 loops complete in  5240 ms
+:2 b
+	'080.cpp:2' "benchmarking: reading/writing custom type"
+		1000 loops complete in  7500 ms
+:3 b
+	'080.cpp:3' "benchmarking: writing Config" (208 JSON entries)
+		1000 loops complete in 23000 ms
+:4 b
+	'080.cpp:4' "benchmarking: reading Config" (60 json entries)
+		1000 loops complete in 17000 ms

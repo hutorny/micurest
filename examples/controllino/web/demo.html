@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>&#x3BC;cuREST Demo for Controllino</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="&#x3BC;cuREST Demo for Controllino">
+    <meta name="author" content="">
+    <base href="//r.iot-ware.com/w/">
+	<link rel="stylesheet" href="css/responsive.css">
+	<link rel="stylesheet" href="css/style.css">
+	<style type="text/css">
+		input[type="file"] {
+    		display: none !important;
+		}
+		input[type="file"]:invalid ~ label {
+		  	opacity: 0.3;
+		}
+		#fieldsets {
+			padding-top: 4em;
+		}
+	@media screen and (min-height: 500px) {
+	#copyright {
+		bottom: 0;
+	}}
+	</style>
+    <link rel="shortcut icon" href="favicon.ico">
+  </head>
+</head>
+<body>
+<div id="container">
+	<div id="fieldsets">
+	<fieldset class="inline-block">
+		<legend>
+			<label>Data Fields</label>
+		</legend>		
+		<div class="main-nav">
+			<ul id="menu-top" class="navigation">
+				<li id="menu-item-gpio" class=""><a href="/io" target="_top">IO</a></li>
+				<li id="menu-item-demo" class=""><a href="/demo" target="_top">Demo</a></li>
+				<li id="menu-item-none" class=""><span>&nbsp;</span></li>
+				<li id="menu-item-about" class=""><a href="about.html" target="_top" id="about">About</a></li>
+			</ul>
+		</div>
+		<table>
+			<tr><td style="width:12em">Logical</td><td style="width:16em">
+				<input type="radio" class="bind hidden-input radio-YES" name="logical" id="logical" disabled="disabled">
+				<input type="radio" class="hidden-input radio-NO" name="logical" id="logical_no" checked="checked" disabled="disabled">
+				<label class="radio-YES" for="logical">TRUE</label><label class="radio-NO" for="logical_no">FALSE</label>
+			</td></tr>
+			<tr><td>Natural</td><td>
+				<input id="natural" class="bind w100p" maxlength="10" 
+					pattern="[0-9]+" disabled="disabled"></td></tr>
+			<tr><td>Text</td><td>
+				<input id="text" class="bind w100p" maxlength="32" disabled="disabled"></td></tr>
+			<tr><td>Enum</td><td>
+				<select id="mode" class="bind w100p" name="mode" disabled="disabled">
+					<option></option>
+				</select>
+			</td></tr>
+			<tr><td>MAC Address</td><td>
+				<input id="mac"  class="bind w100p" title="Demo only. Does not affect mac address in use"
+					maxlength="17"  placeholder="00:00:00:00:00:00"
+					pattern="((^|:)[0-9A-Fa-f][0-9A-Fa-f]){6}$" disabled="disabled"></td></tr>
+			<tr><td>IP Address</td><td>
+				<input id="ip" class="bind w100p" title="Demo only. Does not affect IP address in use"				
+					pattern="((^|\.)((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))){4}$"
+					placeholder="0.0.0.0" maxlength="15" disabled="disabled"></td></tr>
+			<tr><td>Real Time Clock<button id="rtc-set" title="Set browser's current local time">&#x1f550;&nbsp;&#x25b6;</button></td><td>
+				<input id="rtc" class="bind w100p" title="Affects RTC on Controllino"				
+					pattern="20[0-9]{2}-(?:0[0-9]|1[0-2])-(?:[0-2][0-9]|3[0-2])(?: (?:[0-5][0-9])(?::[0-5][0-9]){0,2})?"
+					placeholder="2017-12-31 23:59:59" disabled="disabled"></td></tr>
+			<tr><td>BLOB/Image</td><td>
+				<input type="file" id="blob" accept="image/*" class="bind"></input>
+				<label for="blob" id="upload-label">
+					<img id="blob" class="w100p" src="/blob" alt="Upload">
+				</label>
+			</td></tr>
+		</table>		
+	</fieldset>	
+	</div>
+	<div id="messages">
+		<fieldset class="inline-block">
+			<div id="log"><span>Edit any field above and hit enter</span></div>
+		</fieldset>
+	</div>		
+</div>
+<div id="copyright">Copyright &copy; 2017 Eugene Hutorny <span id="copyright-email">@</span></div>
+</body>
+<script type="text/javascript" src="js/pure.js"></script>
+<script type="text/javascript" src="js/micu.js"></script>
+<script>
+var UI;
+document.mcumodel = null;
+window.onload = function() {
+	UI = new UIDemo();
+
+	UI.directives.bind = {
+		'logical'	: 'logical',
+		'natural'	: 'natural',
+		'text' 		: 'text'
+	};
+	UI.targets.mode = '#mode'; 
+	UI.targets.blob = 'img#blob';
+	UI.targets.setrtc = '#rtc-set';
+	UI.targets.rtc = '#rtc';
+	UI.controls.about = '#about';
+	UI.directives.meta = { mode : '/meta/mode' };
+	UI.directives.mode = {
+		'option' : {
+			'i<-' : {
+				'.' : 'i',
+				'@value' : 'i'
+			} 
+		}	
+	};	
+
+	UI.init();
+	if( document.mcumodel ) {
+		UI.render(document.mcumodel);
+		delete document.mcumodel;
+	}
+};
+function render(DATA) {
+	UI.render(DATA);
+};
+</script>
+</html>

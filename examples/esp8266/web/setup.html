@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>ESP8266 Control Panel > Setup</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <base href="//r.iot-ware.com/v/">
+	<link rel="stylesheet" href="css/responsive.css">
+	<link rel="stylesheet" href="css/style.css">
+    <link rel="shortcut icon" href="//r.iot-ware.com/v/favicon.ico">
+  </head>
+</head>
+<body>
+<div id="container">
+	<div class="main-nav">
+		<ul id="menu-top" class="menu">
+			<li id="menu-item-status" class="menu menu-item"><a href="/status" target="_top">Status</a></li>
+			<li id="menu-item-setup" class="menu menu-item"><a href="/setup" target="_top">Setup</a></li>
+			<li id="menu-item-gpio" class="menu menu-item"><a href="/gpio" target="_top">GPIO</a></li>
+			<li id="menu-item-demo" class="menu menu-item"><a href="/demo" target="_top">Demo</a></li>
+			<li id="menu-item-none" class="menu menu-item"><span>&nbsp;</span></li>
+			<li id="menu-item-about" class="menu menu-item"><a href="about.html" target="_top" id="about">About</a></li>
+		</ul>
+	</div>
+	<h2 id="actions"><a>Setup</a>
+		<span id="formactions" class="formactions">
+			<button id="apply" class="" >Apply</button>
+			<button id="save" class="" >Save</button>
+		</span>	
+	</h2>
+	<div id="fieldsets">
+	<input type="radio" class="hidden-input" id="tab-sta" name="tab-control" checked="checked" >
+	<input type="radio" class="hidden-input" id="tab-sntp" name="tab-control">
+	<input type="radio" class="hidden-input" id="tab-ap" name="tab-control">
+	<div class="inline-block" id="sta-sntp">
+	  <fieldset id="sta">
+		<legend>
+			<label class="default">WiFi Station</label>
+			<label class="tab" id="legend-sta" for="tab-sta">Station</label>
+			<span  class="tab" id="legend-dlm">&nbsp;</span>
+			<label class="tab" id="legend-ap" for="tab-ap">AP</label>
+			<span  class="tab" id="legend-dlm">&nbsp;</span>
+			<label class="tab" id="legend-sntp" for="tab-sntp">SNTP</label>
+		</legend>		
+		<table>
+			<tr><td style="width:12em">Enable</td><td style="width:16em">
+				<input type="radio" class="hidden-input radio-YES" name="sta_enable" id="sta_enable">
+				<input type="radio" class="hidden-input radio-NO" name="sta_enable" id="sta_enable_no" checked="checked">
+				<label class="radio-YES" for="sta_enable">YES</label><label class="radio-NO" for="sta_enable_no">NO</label>
+			</td></tr>
+			<tr><td>SSID</td><td>
+				<input id="sta_config_ssid" class="w100p" maxlength="32" 
+					title="Enter SSID of a WiFi network" required></td></tr>
+			<tr><td>Password</td><td>
+				<input id="sta_config_password" class="w100p" maxlength="64"></td></tr>
+			<tr class="dlm"><td>BSSID</td><td>
+				<input  id="sta_config_bssid" class="w100p" 
+					maxlength="17"  placeholder=""
+					pattern="([0-9A-Fa-f][0-9A-Fa-f]:){5}[0-9A-Fa-f][0-9A-Fa-f]"></td></tr>
+			<tr><td>Autoconnect</td><td>
+				<input type="radio" class="hidden-input radio-YES" name="sta_autoconnect" id="sta_autoconnect">
+				<input type="radio" class="hidden-input radio-NO" name="sta_autoconnect" id="sta_autoconnect_no" checked="checked">
+				<label class="radio-YES" for="sta_autoconnect">ON</label><label class="radio-NO" for="sta_autoconnect_no">OFF</label>
+			</td></tr>
+			<tr><td>Hostname</td><td>
+				<input id="sta_hostname" class="w100p"></td></tr>
+			<tr><td>MAC Address</td><td>
+				<input id="sta_mac"  class="w100p"
+					maxlength="17"  placeholder="00:00:00:00:00:00"
+					pattern="([0-9A-Fa-f][0-9A-Fa-f]:){5}[0-9A-Fa-f][0-9A-Fa-f]"></td></tr>
+			<tr class="dlm"><td>DHCP</td><td>
+				<input type="radio" class="hidden-input radio-YES" name="sta_dhcp_enable" id="sta_dhcp_enable">
+				<input type="radio" class="hidden-input radio-NO" name="sta_dhcp_enable" id="sta_dhcp_enable_no" checked="checked">
+				<label class="radio-YES" for="sta_dhcp.enable">ON</label><label class="radio-NO" for="sta_dhcp.enable_no">OFF</label>
+			<tr><td>IP Address</td><td>
+				<input id="sta_ip_addr" class="w100p"				
+					pattern="((^|\.)((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))){4}$"
+					placeholder="0.0.0.0" maxlength="15" required></td></tr>
+			<tr><td>Network Mask</td><td>
+				<input id="sta_ip_mask"  class="w100p" 
+					pattern="((^|\.)((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))){4}$"
+					placeholder="255.255.255.0" required></td></tr>
+			<tr><td>Gateway</td><td>
+				<input id="sta_ip_gw" class="w100p"
+					pattern="((^|\.)((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))){4}$"
+					placeholder="0.0.0.0" maxlength="15" required></td></tr>
+		</table>		
+	  </fieldset>	
+	  <fieldset id="sntp">
+		<legend>
+			<label class="default" >SNTP</label>
+			<label class="tab" id="legend-sta" for="tab-sta">Station</label>
+			<span  class="tab" id="legend-dlm">&nbsp;</span>
+			<label class="tab" id="legend-ap" for="tab-ap">AP</label>
+			<span  class="tab" id="legend-dlm">&nbsp;</span>
+			<label class="tab" id="legend-sntp" for="tab-sntp">SNTP</label>
+		</legend>		
+		<table>
+			<tr><td style="width:12em">Enable</td><td style="width:16em">
+				<input type="radio" class="hidden-input radio-YES" name="sntp_enable" id="sntp_enable">
+				<input type="radio" class="hidden-input radio-NO" name="sntp_enable" id="sntp_enable_no" checked="checked">
+				<label class="radio-YES" for="sntp_enable">YES</label><label class="radio-NO" for="sntp_enable_no">NO</label>
+			</td></tr>
+			<tr><td>Server 0</td><td>
+				<input id="sntp_server0" class="w100p" maxlength="24" 
+					title="SNTP Server 0" placeholder="SNTP Server 0"></td></tr>
+			<tr><td>Server 1</td><td>
+				<input id="sntp_server1" class="w100p" maxlength="24" 
+					title="SNTP Server 1" placeholder="SNTP Server 1"></td></tr>
+			<tr><td>Server 2</td><td>
+				<input id="sntp_server2" class="w100p" maxlength="24" 
+					title="SNTP Server 2" placeholder="SNTP Server 2"></td></tr>
+		</table>
+	  </fieldset>		
+	</div>
+	<div id="ap-">	
+	  <fieldset class="inline-block" id="ap">
+		<legend>
+			<label class="default">WiFi Access Point</label>
+			<label class="tab" id="legend-sta" for="tab-sta">Station</label>
+			<span  class="tab" id="legend-dlm">&nbsp;</span>
+			<label class="tab" id="legend-ap" for="tab-ap">AP</label>
+			<span  class="tab" id="legend-dlm">&nbsp;</span>
+			<label class="tab" id="legend-sntp" for="tab-sntp">SNTP</label>
+		</legend>		
+		<table>
+			<tr><td style="width:12em">Enable</td><td style="width:16em">
+				<input type="radio" class="hidden-input radio-YES" name="ap_enable" id="ap_enable">
+				<input type="radio" class="hidden-input radio-NO" name="ap_enable" id="ap_enable_no" checked="checked">
+				<label class="radio-YES" for="ap_enable">YES</label><label class="radio-NO" for="ap_enable_no">NO</label>
+			<tr><td>SSID</td><td>
+				<input id="ap_config_ssid" class="w100p" maxlength="32" 
+				title="Enter SSID of this WiFi network"></td></tr>
+			<tr><td>Password</td><td>
+				<input id="ap_config_password" class="w100p" maxlength="64"></td></tr>
+			<tr><td>Channel</td><td>
+				<input id="ap_config_channel" class="w100p type-int" maxlength="3"
+					placeholder="1-14"
+					pattern="(1[0-4])|[1-9]"></td></tr>
+			<tr><td>Hide SSID</td><td>
+				<input type="radio" class="hidden-input radio-YES" name="ap_config_hidden" id="ap_config_hidden">
+				<input type="radio" class="hidden-input radio-NO" name="ap_config_hidden" id="ap_config_hidden_no" checked="checked">
+				<label class="radio-YES" for="ap_config_hidden">HIDE</label><label class="radio-NO" for="ap_config_hidden_no">SHOW</label>
+			</td></tr>
+			<tr><td>Limit connections to</td><td>
+				<input id="ap_config_maxcon" class="w100p type-int" maxlength="5"
+					placeholder="4" max="4"
+					pattern="[1-4]"></td></tr>
+			<tr class="dlm"><td>Beacon Interval (ms)</td><td>
+				<input id="ap_config_beacon_interval" class="w100p type-int" maxlength="5"
+					placeholder="100" max="60000"
+					pattern="[1-9]?[0-9]+"></td></tr>
+			<tr><td>MAC Address</td><td>
+				<input id="ap_mac"  class="w100p"
+					maxlength="17"  placeholder="00:00:00:00:00:00"
+					pattern="([0-9A-Fa-f][0-9A-Fa-f]:){5}[0-9A-Fa-f][0-9A-Fa-f]"></td></tr>
+			<tr><td>IP Address</td><td>
+				<input id="ap_ip_addr" class="w100p"				
+					pattern="((^|\.)((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))){4}$"
+					placeholder="0.0.0.0" maxlength="15" required></td></tr>
+			<tr><td>Network Mask</td><td>
+				<input id="ap_ip_mask"  class="w100p" 
+					pattern="((^|\.)((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))){4}$"
+					placeholder="255.255.255.0" required></td></tr>
+			<tr class="dlm"><td>Gateway</td><td>
+				<input id="ap_ip_gw" class="w100p"
+					pattern="((^|\.)((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))){4}$"
+					placeholder="0.0.0.0" maxlength="15" required></td></tr>
+			<tr><td>DHCP Server</td><td>
+				<input type="radio" class="hidden-input radio-YES" name="ap_dhcps_enable" id="ap_dhcps_enable">
+				<input type="radio" class="hidden-input radio-NO" name="ap_dhcps_enable" id="ap_dhcps_enable_no" checked="checked">
+				<label class="radio-YES" for="ap_dhcps_enable">ON</label><label class="radio-NO" for="ap_dhcps_enable_no">OFF</label>
+			</td></tr>
+			<tr><td>Range of IP Addresses</td><td>
+				<input id="ap_dhcps_range_start"  
+					pattern="((^|\.)((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))){4}$"
+					placeholder="0.0.0.0" style="width: 7.3em">
+				<input id="ap_dhcps_range_end"  
+					pattern="((^|\.)((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))){4}$"
+					placeholder="0.0.0.0" style="width: 7.3em"></td></tr>
+			<tr><td>Leastime</td><td><input id="ap_dhcps_leasetime"  class="w100p type-int" 
+				pattern="[0-9]+"
+				placeholder="120" ></td></tr>
+		</table>
+	  </fieldset>
+	</div>
+	</div>
+</div>
+<div id="copyright">Copyright &copy; 2017 Eugene Hutorny <span id="copyright-email">@</span></div>
+</body>
+<script type="text/javascript" src="js/pure.js"></script>
+<script type="text/javascript" src="js/micu.js"></script>
+<script>
+var UI;
+document.mcumodel = null;
+function _null() { return null; }
+function traverse(obj, path) {
+	return (! path || ! obj || path.length == 0) ? obj :
+		(path.length == 1 ? obj[path[0]] : traverse(obj[path[0]],path.slice(1)));
+}
+function _checked(path) {
+	return function(a) {
+		return traverse(a, path.split('.')) ? true : null; 
+	}
+}
+function _notchecked(path) {
+	return function(a) {
+		return traverse(a, path.split('.')) ? null : true; 
+	}
+}
+
+function _item(path,index) {
+	return function(a) {
+		var arr = traverse(a, path.split('.'));
+		return arr ? arr[index] : null; 
+	}
+}
+
+
+window.onload = function() {
+	UI = new UISetup();
+
+	UI.directives.config = {
+		'input[name="sta_enable"]@checked' : _null,
+		'input[name="sta_autoconnect"]@checked' : _null,
+		'input[name="sta_dhcp_enable"]@checked' : _null,
+		'#sta_enable@checked' 		: _checked('context.sta.enable'),
+		'#sta_enable_no@checked' 	: _notchecked('context.sta.enable'),
+		'#sta_autoconnect@checked'  : _checked('context.sta.autoconnect'),
+		'#sta_autoconnect_no@checked' : _notchecked('context.sta.autoconnect'),
+		'#sta_dhcp_enable@checked'  : _checked('context.sta.dhcp'),
+		'#sta_dhcp_enable_no@checked'  : _notchecked('context.sta.dhcp'),
+		'#sta_config_ssid@value' 	: 'sta.config.ssid',
+		'#sta_config_password@value': 'sta.config.password',
+		'#sta_config_bssid@value' 	: 'sta.config.bssid',
+		'#sta_hostname@value'		: 'sta.hostname',
+		'#sta_mac@value' 			: 'sta.mac',
+		'#sta_ip_addr@value' 		: 'sta.ip.addr',
+		'#sta_ip_mask@value'		: 'sta.ip.mask',
+		'#sta_ip_gw@value'			: 'sta.ip.gw',
+		'#sntp_enable@checked' 		: _checked('context.sntp.enable'),
+		'#sntp_enable_no@checked' 	: _notchecked('context.sntp.enable'),
+		'#sntp_server0@value' 		: _item('context.sntp.server',0),
+		'#sntp_server1@value'		: _item('context.sntp.server',1),
+		'input[name="ap_enable"]@checked' : _null,
+		'input[name="ap_config_hidden"]@checked' : _null,
+		'#ap_enable@checked'		: _checked('context.ap.enable'),
+		'#ap_enable_no@checked'		: _notchecked('context.ap.enable'),
+		'#ap_config_ssid@value' 	: 'ap.config.ssid',
+		'#ap_config_password@value' : 'ap.config.password',
+		'#ap_config_maxcon@value'	: 'ap.config.maxcon',	
+		'#ap_config_channel@value'  : 'ap.config.channel',
+		'#ap_config_hidden@checked'	: _checked('context.ap.hidden'),
+		'#ap_config_hidden_no@checked'	: _notchecked('context.ap.hidden'),
+		'#ap_config_beacon_interval@value'   : 'ap.config.beacon_interval',
+		'#ap_mac@value' 			: 'ap.mac',
+		'#ap_ip_addr@value' 		: 'ap.ip.addr',
+		'#ap_ip_mask@value'			: 'ap.ip.mask',
+		'#ap_ip_gw@value'			: 'ap.ip.gw',
+		'input[name="ap_dhcps_enable"]@checked' : _null,
+		'#ap_dhcps_enable@checked'  : _checked('context.ap.dhcps.enable'),
+		'#ap_dhcps_enable_no@checked' : _notchecked('context.ap.dhcps.enable'),
+		'#ap_dhcps_range_start@value'	: 'ap.dhcps.range.start',
+		'#ap_dhcps_range_end@value'	: 'ap.dhcps.range.end',
+		'#ap_dhcps_leasetime@value'	: 'ap.dhcps.leasetime'
+	};
+	UI.directives.collect = { 
+		'{sta' : {
+			'#sta_enable@checked' 			: 'enable',
+			'#sta_autoconnect@checked'  	: 'autoconnect',
+			'#sta_dhcp_enable@checked'  	: 'dhcp',
+			'{config' : {
+				'#sta_config_ssid@value' 	: 'ssid',
+				'#sta_config_password@value': 'password',
+				'#sta_config_bssid@value' 	: 'bssid'
+			},
+			'#sta_hostname@value'			: 'hostname',
+			'#sta_mac@value' 				: 'mac',
+			'{ip' : {
+				'#sta_ip_addr@value' 		: 'addr',
+				'#sta_ip_mask@value'		: 'mask',
+				'#sta_ip_gw@value'			: 'gw'
+			}
+		},
+		'{sntp' : {
+			'#sntp_enable@checked' 			: 'enable',
+			'[server'						: {
+				'#sntp_server0@value'			: 0,
+				'#sntp_server1@value'			: 1
+			}
+		},
+		'{ap' : {
+			'#ap_enable@checked'		: 'enable',
+			'#ap_mac@value' 			: 'mac',
+			'{config' : { 
+				'#ap_config_ssid@value' 	: 'ssid',
+				'#ap_config_password@value' : 'password',
+				'#ap_config_channel@value'  : 'channel',
+				'#ap_config_hidden@checked'	: 'hidden',
+				'#ap_config_maxcon@value' 	: 'maxcon',
+				'#ap_config_beacon_interval@value' : 'beacon_interval'
+			},
+			'{ip' : {
+				'#ap_ip_addr@value' 		: 'addr',
+				'#ap_ip_mask@value'			: 'mask',
+				'#ap_ip_gw@value'			: 'gw'
+			},
+			'{dhcps' : {
+				'#ap_dhcps_enable@checked'  : 'enable',
+				'#ap_dhcps_leasetime@value'	: 'leasetime',
+				'{range' : {
+					'#ap_dhcps_range_start@value'	: 'start',
+					'#ap_dhcps_range_end@value'		: 'end'
+				}
+			}
+		}
+	};
+	UI.controls.about = '#about';	
+	UI.init();
+	if( document.mcumodel ) {
+		UI.render(document.mcumodel);
+		delete document.mcumodel;
+	}
+};
+
+function render(model) {
+	if( UI )
+		UI.render(model);
+	else
+		document.mcumodel = model;
+};
+</script>
+</html>

@@ -1,0 +1,42 @@
+{ 
+  "wan": {
+    "proto": "dhcp",
+    "ipaddr":  [192,168,159,47],
+    "netmask": [255,255,255,0],
+    "gwaddr":  [192,168,159,1],
+    "expires": -1,
+    "uptime": 10176769,
+    "ifname": "br-wan",
+    "dns":  [
+        [192,168,158,6],
+        [192,168,158,2],
+        [192,168,158,1]
+    ]
+  },
+"membuffers": 2076,
+"conncount": 87,
+"memcached": 7576,
+"connmax": 16384,
+"swapcached": 0,
+"swaptotal": 0,
+"memfree": 35328,
+"uptime": 10176796,
+"wifinets": [{
+    "device": "radio0",
+    "networks": [ {
+	    "ifname": "wlan0",
+	    "encryption": "WPA2 PSK (CCMP)",
+	    "bssid": "C4:93:00:00:1D:AF",
+	    "mode": "Master",
+	    "quality": 51,
+	    "noise": -95,
+	    "ssid": "json"
+    }],
+  	"name": "Generic 802.11bgn Wireless Controller (radio0)",
+    "up": true
+    }],
+"memtotal": 61780,
+"localtime": "Tue Sep  8 06:21:31 2015",
+"swapfree": 0,
+"loadavg": [0.0029296875, 0.0146484375, 0.04541015625 ]
+}

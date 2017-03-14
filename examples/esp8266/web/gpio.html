@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>ESP8266 Control Panel > GPIO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="&#x3BC;cuREST Demo">
+    <meta name="author" content="">
+    <base href="//r.iot-ware.com/v/">
+	<link rel="stylesheet" href="css/responsive.css">
+	<link rel="stylesheet" href="css/style.css">
+    <link rel="shortcut icon" href="//r.iot-ware.com/v/favicon.ico">
+  </head>
+</head>
+<body>
+<div id="container">
+	<div class="main-nav">
+		<ul id="menu-top" class="menu">
+			<li id="menu-item-status" class="menu menu-item"><a href="/status" target="_top">Status</a></li>
+			<li id="menu-item-setup" class="menu menu-item"><a href="/setup" target="_top">Setup</a></li>
+			<li id="menu-item-gpio" class="menu menu-item"><a href="/gpio" target="_top">GPIO</a></li>
+			<li id="menu-item-demo" class="menu menu-item"><a href="/demo" target="_top">Demo</a></li>
+			<li id="menu-item-none" class="menu menu-item"><span>&nbsp;</span></li>
+			<li id="menu-item-about" class="menu menu-item"><a href="about.html" target="_top" id="about">About</a></li>
+		</ul>
+	</div>
+	<h2 id="actions"><a>GPIO</a>
+	</h2>
+	<div id="fieldsets">
+	<fieldset class="inline-block" id="port-data">
+		<legend><label>Port</label></legend>
+		<table id="port-bits">
+			<tr><th class="w4em">Bit</th>
+				<td class="bit-num w1em8"></td>
+				<td class="bit-action w4em">Action</td>
+			</tr>
+			<tr id="port-pads"><th>Pad</th>
+				<td class="bit-pad w1em8"></td>
+				<td>&nbsp;</td>
+			</tr>
+			<tr id="port-mode"><th>Enable</th>
+				<td class="bit-mode w1em8" id="bit-mode-">
+					<input type="checkbox" class="hidden-input" id="bit-mode-input-"><label class="button" for="bit-mode-input-"></label></td>
+				<td class="bit-action"><button id="set-mode-0">Set</button></td>
+			</tr>			
+			<tr id="port-state"><th>State</th>
+				<td class="bit-state w1em8" id="bit-state-">
+					<input type="checkbox" class="hidden-input" id="bit-state-input-"><label class="button" for="bit-state-input-"></label></td>
+				<td class="bit-action"><button id="set-state-0">Set</button></td>				
+			</tr>
+		</table>	
+		<fieldset class="inline-block" id="gpio-config">
+			<legend><label>Config</label></legend>		
+			<table id="gpio-cfg">
+				<tr><th class="w50">GPIO</th><th class="w8em">Mode</th></tr>
+				<tr class="gpio"><td class="gpio-num">-</td>
+				<td class="gpio-mode"><select id="gpio-" class="gpio-mode">
+					<option></option>
+				</select></td></tr>
+			</table>
+		</fieldset>
+		<fieldset class="inline-block" id="gpio-data">
+			<legend><label>Data</label></legend>		
+			<table id="gpio-bits">
+				<tr><th class="w50">GPIO</th><th class="w4em">State</th></tr>
+				<tr class="gpio"><td class="gpio-num">-</td><td id="gpio-" class="bit-state">
+					<input type="checkbox" class="hidden-input" id="gpio-data-input-"><label class="button" for="gpio-data-input-"></label>
+				</td></tr>
+			</table>
+		</fieldset>
+	</fieldset>
+	</div>
+</div>
+<div id="copyright">Copyright &copy; 2017 Eugene Hutorny <span id="copyright-email">@</span></div>
+</body>
+<script type="text/javascript" src="js/pure.js"></script>
+<script type="text/javascript" src="js/micu.js"></script>
+<script>
+var UI;
+document.mcumodel = null;
+
+window.onload = function() {
+	UI = new UIGpio();
+	if( ! UI.sources ) UI.sources = {};
+	UI.targets.gpios = '#gpio-bits';
+	UI.directives.gpios = {
+		'.gpio' : {
+			'p<-' : {
+				'.gpio-num'		: 'p.gpio',
+				'.bit-state input@id+': 'p.gpio',
+				'.bit-state input@checked': 'p.in',
+				'.bit-state input@disabled': function() { return !this.enable; },
+				'.bit-state input@url'	: 'p.url',	
+				'.bit-state label@for+': 'p.gpio',
+				'.bit-state@id+': 'p.gpio'
+			} 
+		}	
+	};	
+	UI.targets.gpios_config = '#gpio-cfg';
+	UI.directives.gpios_config = {
+		'.gpio' : {
+			'p<-' : {
+				'.gpio-num'		: 'p.gpio',
+				'select@id+'	: 'p.gpio',
+				'select@gpio'	: 'p.gpio',	
+				'select@url'	: 'p.url'	
+			}
+		}
+	};
+
+	UI.targets.state = '#port-state';
+	UI.targets.modes = '#port-mode';
+	UI.targets.port  = '#port-bits';
+	UI.directives.port = {
+		'.bit-num'   : { 'p<-pin' : { '.'     : 'p.id' } },
+		'.bit-mode'  : { 
+			'p<-pin' : { 
+				'@id+'  : 'p.id', 
+				'input@id+' : 'p.id', 
+				'input@pin' : 'p.id', 
+				'label@for+' : 'p.id' 
+			}},
+		'.bit-pad'   : { 'p<-pin' : { '.'     : 'p.pad' } },
+		'.bit-state' : { 
+			'p<-pin' : { 
+				'@id+'  : 'p.id', 
+				'input@id+' : 'p.id', 
+				'input@pin' : 'p.id', 
+				'label@for+': 'p.id',
+			}},
+		'#set-state-0@url' : 'url', 
+		'#set-mode-0@url'  : 'config', 
+		'#set-state-0@portid' : 'id', 
+		'#set-mode-0@portid'  : 'id' 
+	};
+	UI.targets.mode = 'td.gpio-mode';
+	UI.directives.mode = {
+		'.gpio-mode option' : {
+			'm<-' : {
+				'.' : 'm',
+				'@value' : 'm'
+			}
+		}	
+	};
+	UI.sources.portstate = '#port-state input[pin]';
+	UI.sources.portmode  = '#port-mode input[pin]';
+
+	UI.controls.portstate.selector = '#set-state-0';
+	UI.controls.portmode.selector = '#set-mode-0';
+	UI.controls.gpio.selector = '#gpio-bits .bit-state input';
+	UI.controls.gpio_config.selector = '#gpio-cfg select.gpio-mode';
+	UI.controls.about = '#about';
+	UI.init();
+	if( document.mcumodel ) {
+		UI.render(document.mcumodel);
+		delete document.mcumodel;
+	}
+};
+
+function render(model) {
+	if( UI )
+		UI.render(model);
+	else
+		document.mcumodel = model;
+};
+</script>
+</html>

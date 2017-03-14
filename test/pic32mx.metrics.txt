@@ -1,0 +1,15 @@
+   text	 rodata	   data	    bss	    dec	    hex	filename
+  13464	    976	     80	    472	  14992	   3a90	00-base.
+  19676	   1300	     80	    488	  21544	   5428	01-short-value.
+  19616	   1300	     80	    492	  21488	   53f0	02-long-value.
+  26632	   1408	     80	    492	  28612	   6fc4	03-double-value.
+  23308	   1300	     80	    496	  25184	   6260	04-string.
+  24480	   1304	     80	    492	  26356	   66f4	05-vector-of-shorts.
+  29772	   1476	     80	    564	  31892	   7c94	06-object-virt.
+  28416	   1364	     80	    540	  30400	   76c0	07-object-pdo.
+  25776	   1304	     80	    496	  27656	   6c08	08-custom-type.
+  74656	   2908	     80	    968	  78612	  13314	09-complex-object.
+  20552	   1316	     80	    504	  22452	   57b4	11-short-values.
+  20472	   1316	     80	    508	  22376	   5768	12-long-values.
+  27488	   1424	     80	    508	  29500	   733c	13-double-values.
+  23600	   1300	     80	    516	  25496	   6398	14-strings.

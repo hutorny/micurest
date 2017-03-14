@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+	<meta charset="utf-8">
+	<title>Controllino Panel > GPIO</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="&#x3BC;cuREST Demo">
+	<meta name="author" content="">
+	<base href="//r.iot-ware.com/w/">
+	<link rel="stylesheet" href="css/responsive.css">
+	<link rel="stylesheet" href="css/style.css">
+	<link rel="shortcut icon" href="//r.iot-ware.com/w/favicon.ico">
+	<style type="text/css">
+	@media screen and (min-height: 421px) {
+	#copyright {
+		bottom: 0;
+	}}
+	@media screen and (max-height: 420px) {
+	#copyright {
+		top: 400px;
+	}}
+	</style>
+  </head>
+<body>
+<div id="container">
+	<div id="controllino-fieldsets">
+	   <div>
+		<div class="main-nav">
+			<ul id="menu-top" class="navigation">
+				<li id="menu-item-gpio" class=""><a href="/io" target="_top">IO</a></li>
+				<li id="menu-item-demo" class=""><a href="/demo" target="_top">Demo</a></li>
+				<li id="menu-item-none" class=""><span>&nbsp;</span></li>
+				<li id="menu-item-about" class=""><a href="about.html" target="_top" id="about">About</a></li>
+			</ul>
+		</div>
+		<fieldset class="inline-block" id="a">
+			<legend><label>Analog</label></legend>		
+			<table id="analog-values" class="mini-panel">
+				<tr>
+					<td class="analog-num"><label>A0</label></td><td id="analog-0" class="analog-value">-</td>
+					<td class="analog-num"><label>A6</label></td><td id="analog-6" class="analog-value">-</td>
+				</tr>
+				<tr class="analog">
+					<td class="analog-num"><label>A1</label></td><td id="analog-1" class="analog-value">-</td>
+					<td class="analog-num"><label>A7</label></td><td id="analog-7" class="analog-value">-</td>
+				</tr>
+				<tr class="analog">
+					<td class="analog-num"><label>A2</label></td><td id="analog-2" class="analog-value">-</td>
+					<td class="analog-num"><label>A8</label></td><td id="analog-8" class="analog-value">-</td>
+				</tr>
+				<tr class="analog">
+					<td class="analog-num"><label>A3</label></td><td id="analog-3" class="analog-value">-</td>
+					<td class="analog-num"><label>A9</label></td><td id="analog-9" class="analog-value">-</td>
+				</tr>
+				<tr class="analog">
+					<td class="analog-num"><label>A4</label></td><td id="analog-4" class="analog-value">-</td>
+					<td class="analog-num"><label>IN0</label></td><td id="in-0" class="analog-value">-</td>
+				</tr>
+				<tr class="analog">
+					<td class="analog-num"><label>A5</label></td><td id="analog-5" class="analog-value">-</td>
+					<td class="analog-num"><label>IN1</label></td><td id="in-1" class="analog-value">-</td>
+				</tr>
+			</table>
+			<div style="position:absolute">
+				<button id="a" class="group-action refresh" style="top:1em; width:8.4em;">Refresh</button>
+			</div>
+		</fieldset>
+		<fieldset class="inline-block" id="d">
+			<legend><label>Digital</label></legend>		
+			<table id="digital-values" class="mini-panel">
+				<tr>
+					<td class="digital-num"><label for="digital-0">D0</label></td>
+					<td id="td-dig-0" class="bit-state"><input type="checkbox" class="hidden-input" id="digital-0"><label class="led" for="digital-0"></label></td>
+					<td id="td-dig-6" class="bit-state"><input type="checkbox" class="hidden-input" id="digital-6"><label class="led" for="digital-6"></label></td>
+					<td class="digital-num"><label for="digital-6">D6</label></td>
+				</tr>
+				<tr>
+					<td class="digital-num"><label for="digital-1">D1</label></td>
+					<td id="td-dig-1" class="bit-state"><input type="checkbox" class="hidden-input" id="digital-1"><label class="led" for="digital-1"></label></td>
+					<td id="td-dig-7" class="bit-state"><input type="checkbox" class="hidden-input" id="digital-7"><label class="led" for="digital-7"></label></td>
+					<td class="digital-num"><label for="digital-7">D7</label></td>
+				</tr>
+				<tr>
+					<td class="digital-num"><label for="digital-2">D2</label></td>
+					<td id="td-dig-2" class="bit-state"><input type="checkbox" class="hidden-input" id="digital-2"><label class="led" for="digital-2"></label></td>
+					<td id="td-dig-8" class="bit-state"><input type="checkbox" class="hidden-input" id="digital-8"><label class="led" for="digital-8"></label></td>
+					<td class="digital-num"><label for="digital-8">D8</label></td>
+				</tr>
+				<tr>
+					<td class="digital-num"><label for="digital-3">D3</label></td>
+					<td id="td-dig-3" class="bit-state"><input type="checkbox" class="hidden-input" id="digital-3"><label class="led" for="digital-3"></label></td>
+					<td id="td-dig-9" class="bit-state"><input type="checkbox" class="hidden-input" id="digital-9"><label class="led" for="digital-9"></label></td>
+					<td class="digital-num"><label for="digital-9">D9</label></td>
+				</tr>
+				<tr>
+					<td class="digital-num"><label for="digital-4">D4</label></td>
+					<td id="td-dig-4" class="bit-state"><input type="checkbox" class="hidden-input" id="digital-4"><label class="led" for="digital-4"></label></td>
+					<td id="td-dig-10" class="bit-state"><input type="checkbox" class="hidden-input" id="digital-10"><label class="led" for="digital-10"></label></td>
+					<td class="digital-num"><label for="digital-10">D10</label></td>
+				</tr>
+				<tr>
+					<td class="digital-num"><label for="digital-5">D5</label></td>
+					<td id="td-dig-5" class="bit-state"><input type="checkbox" class="hidden-input" id="digital-5"><label class="led" for="digital-5"></label></td>
+					<td id="td-dig-11" class="bit-state"><input type="checkbox" class="hidden-input" id="digital-11"><label class="led" for="digital-11"></label></td>
+					<td class="digital-num"><label for="digital-11">D11</label></td>
+				</tr>
+			</table>
+			<div style="position:absolute">
+			<button id="d" class="group-action clear-all" style="top:1em;">Clear all</button>
+			</div>
+		</fieldset>
+		<fieldset class="inline-block" id="r">
+			<legend><label>Relay</label></legend>		
+			<table id="relay-values" class="mini-panel">
+				<tr class="relay">
+					<td class="digital-num"><label for="digital-">R0</label></td>
+					<td id="rd-rel-0" class="bit-state"><input type="checkbox" class="hidden-input" id="relay-0"><label class="led" for="relay-0"></label></td>
+					<td id="rd-rel-5" class="bit-state"><input type="checkbox" class="hidden-input" id="relay-5"><label class="led" for="relay-5"></label></td>
+					<td class="digital-num"><label for="digital-">R5</label></td>
+				</tr>
+				<tr class="relay">
+					<td class="digital-num"><label for="digital-">R1</label></td>
+					<td id="rd-rel-1" class="bit-state"><input type="checkbox" class="hidden-input" id="relay-1"><label class="led" for="relay-1"></label></td>
+					<td id="rd-rel-6" class="bit-state"><input type="checkbox" class="hidden-input" id="relay-6"><label class="led" for="relay-6"></label></td>
+					<td class="digital-num"><label for="digital-">R6</label></td>
+				</tr>
+				<tr class="relay">
+					<td class="digital-num"><label for="digital-">R2</label></td>
+					<td id="rd-rel-2" class="bit-state"><input type="checkbox" class="hidden-input" id="relay-2"><label class="led" for="relay-2"></label></td>
+					<td id="rd-rel-7" class="bit-state"><input type="checkbox" class="hidden-input" id="relay-7"><label class="led" for="relay-7"></label></td>
+					<td class="digital-num"><label for="digital-">R7</label></td>
+				</tr>
+				<tr class="relay">
+					<td class="digital-num"><label for="digital-">R3</label></td>
+					<td id="rd-rel-3" class="bit-state"><input type="checkbox" class="hidden-input" id="relay-3"><label class="led" for="relay-3"></label></td>
+					<td id="rd-rel-8" class="bit-state"><input type="checkbox" class="hidden-input" id="relay-8"><label class="led" for="relay-8"></label></td>
+					<td class="digital-num"><label for="digital-">R8</label></td>
+				</tr>
+				<tr class="relay">
+					<td class="digital-num"><label for="digital-">R4</label></td>
+					<td id="rd-rel-4" class="bit-state"><input type="checkbox" class="hidden-input" id="relay-4"><label class="led" for="relay-4"></label></td>
+					<td id="rd-rel-8" class="bit-state"><input type="checkbox" class="hidden-input" id="relay-9"><label class="led" for="relay-9"></label></td>
+					<td class="digital-num"><label for="digital-">R9</label></td>
+				</tr>
+			</table>
+			<div style="position:absolute">
+			<button id="r" class="group-action clear-all" style="top:3.94em;">Clear all</button>
+			</div>
+		</fieldset>
+	  </div>
+	</div>
+</div>
+<div id="copyright">Copyright &copy; 2017 Eugene Hutorny <span id="copyright-email">@</span></div>
+</body>
+<script type="text/javascript" src="js/pure.js"></script>
+<script type="text/javascript" src="js/micu.js"></script>
+<script>
+var UI;
+document.mcumodel = null;
+
+function _checked(path, id) {
+	return function(a) {
+		return a&&a.context&&a.context[path]&&a.context[path][id] ? true : null; 
+	}
+}
+
+function _item(path, id) {
+	return function(a) {
+		return a&&a.context&&a.context[path] ? a.context[path][id] : undefined; 
+	}
+}
+
+function _uri(path, id) {
+	return function(a) {
+		return ['',path,id].join('/'); 
+	}
+}
+
+function makedirectives(model) {
+	var d={}, r={}, a = {}, _in={}, io = {};	
+	if(! model ) return dir;
+	for(var i in model.a) {
+		a['#analog-'+i] = _item('a',i);
+		a['#analog-'+i+'@uri'] = _uri('a',i);
+		io['#analog-'+i] = _item('a',i);
+		io['#analog-'+i+'@uri'] = _uri('a',i);
+	}	
+	for(var i in model.d) {
+		d['#digital-'+i+'@checked'] = _checked('d',i);
+		d['#digital-'+i+'@uri'] = _uri('d',i);
+		io['#digital-'+i+'@checked'] = _checked('d',i);
+		io['#digital-'+i+'@uri'] = _uri('d',i);
+	}	
+	for(var i in model.r) {
+		r['#relay-'+i+'@checked'] = _checked('r',i);
+		r['#relay-'+i+'@uri'] = _uri('r',i);
+		io['#relay-'+i+'@checked'] = _checked('r',i);
+		io['#relay-'+i+'@uri'] = _uri('r',i);
+	}	
+	for(var i in model['in']) {
+		_in['#in-'+i] = _item('in',i);
+		io['#in-'+i] = _item('in',i);
+	}
+	return { 'io': io, 'd':d, 'a':a, 'r':r, 'in':_in};
+}
+
+window.onload = function() {
+	UI = new UIIO();
+	UI.targets.io = '#controllino-fieldsets';
+	UI.targets.d = 'fieldset#d';
+	UI.targets.r = 'fieldset#r';
+	UI.targets.a = 'fieldset#a';
+	UI.targets['in'] = 'fieldset#a';
+	UI.controls.io = '.bit-state input[type="checkbox"]'; 
+	UI.controls.clearall = '.clear-all';
+	UI.controls.refresh = 'button.refresh';
+	UI.controls.about = '#about';
+	UI.init();
+	if( document.mcumodel ) {
+		UI.directives = makedirectives(document.mcumodel);
+		UI.render(document.mcumodel);
+		delete document.mcumodel;
+	}
+};
+
+function render(model) {	
+	if( UI ) {
+		UI.directives = makedirectives(model);		
+		UI.render(model);
+	}
+	else
+		document.mcumodel = model;
+		
+};
+</script>
+</html>

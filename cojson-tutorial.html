@@ -1,0 +1,815 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
+<head>
+	<title>cojson tutorial</title>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+
+	<link rel="stylesheet" type="text/css" media="screen,projection" href="http://hutorny.in.ua/wp-content/themes/veryplaintxt/style.css" title="veryplaintxt" />
+	<link rel="stylesheet" type="text/css" media="print" href="http://hutorny.in.ua/wp-content/themes/veryplaintxt/print.css" />
+
+<script type="text/javascript">
+	 var loading_url = "http://hutorny.in.ua/wp-content/plugins/thumbnail-viewer/images/loadingImage.gif";
+</script>
+
+<style type="text/css" media="all">
+body{font-family:'trebuchet ms',helvetica,sans-serif;font-size:90%;}
+body div#container { float: left; margin: 0 -200px 2em 0; } body div#content { margin: 3em 200px 0 0; } body div.sidebar { float: right; }
+body div#content div.hentry{text-align:justify;}
+body div#content h2,div#content h3,div#content h4,div#content h5,div#content h6{font-family:verdana,geneva,sans-serif;}
+body div#wrapper{max-width:65em;min-width:35em;width:80%;}
+body div.sidebar{text-align:left;}
+</style>
+<style type="text/css" id="syntaxhighlighteranchor"></style>
+<style>.term { font-family: "courier new",courier,monospace; }
+span.code { font-family: "courier new",courier,monospace;  font-style: italic;}
+table.table { border-collapse: collapse; border-spacing: 0; padding:0px; margin-left: auto; margin-right: auto; border:1px solid #000000; }
+.table td{ border:1px solid #000000; vertical-align:middle; background-color:#ffffff; text-align:left; padding:4px; }
+.table td:first-child { text-align:left; }
+.table th{ border:1px solid #000000; background-color:#cccccc; text-align:center; font-weight:bold; padding:4px; }
+.table.functions th { text-align:center; font-family: "courier new",courier,monospace; }
+.table.guide { width:100%; }
+.table.guide th, .table.guide td:first-child { text-align: center !important; }
+.table.guide th, .table.guide td { width:20%; }
+.table.guide th:last-child, .table.guide td:last-child { width:45%; }
+.table.guide th:first-child, .table.guide td:first-child { width:15%; }
+.table.guide td .syntaxhighlighter { margin: 0 !important; }
+.table.guide td:nth-child(2) .syntaxhighlighter, .table.guide td.smaller .syntaxhighlighter { font-size: 75% !important; }
+.table.guide td sup+div { width:99% !important; }
+@media print { 
+.table.guide td:nth-child(3) { font-size: 80%; } }
+</style>
+</head>
+<body class="wordpress single">
+
+<div id="wrapper">
+
+	<div id="container">
+		<div id="content" class="hfeed">
+
+
+			<div id="post-617" class="hentry p1 post publish author-admin category-cojson category-projects y2015 m10 d19 h05">
+				<h1 class="entry-title" style="text-align:center;font-stretch: expanded;">cojson tutorial</h1>
+<div class="entry-content">
+<h3>1. Getting Started</h3>
+<p>To start using <span class="term">cojson</span> parser/generator you need to define the structure 
+of your <span class="term">JSON</span> object by mapping its elements to <span class="term">cojson</span> elements, 
+bind them to members of your C++ class (see <a href="#section-2">Section 2</a>),
+implement the interfaces for the data streams you have, and build <span class="term">cojson</span> library 
+with your application (see <a href="#section-3">Section 3</a>).</p>
+<span id="more-617"></span>
+<p>The library provides implementation for parsing/serialization of basic types. However, your application is 
+not limited to those types only. You can add a reader/writer for your own type and use it with 
+<span class="term">cojson</span> (see <a href="#section-5.1">Sections 5.1, 5.2</a>). Also, if signatures of getters/setters 
+in your application do not match expected in <span class="term">cojson</span>, you may define your own accessor 
+with the signatures you have (see <a href="#section-5.3">Section 5.3</a>).</p>
+<p>It worth to mention that <span class="term">cojson</span> neither provides nor allocates any data storage. 
+Instead your application binds the data storage to <span class="term">cojson</span> elements.</p>
+<h3 id="section-2">2. Defining Structure</h3>
+<p><span class="term">JSON</span> structure is defined as a hierarchy of template functions. 
+Parameters of these templates define <span class="term">JSON</span> member name, data type, 
+and the storage access method - a member pointer or getter/setter methods. 
+There are four groups of template functions each having its specific purpose and name:</p>
+<table class="table functions">
+	<tr><th style="width:6em">V&lt;...&gt;()</th><td>Defines a generic value</td></tr>
+	<tr><th>M&lt;...&gt;()</th><td>Defines a member</td></tr>
+	<tr><th>O&lt;...&gt;()</th><td>Defines an object mapped to C++ class</td></tr>
+	<tr><th>P&lt;...&gt;()</th><td>Defines an object property</td></tr>
+</table>
+<pre class="brush: cpp; collapse: true; light: false; title: Examples; toolbar: true; notranslate" title="Examples">
+short val;
+V&lt;M&lt;name,short,&amp;val&gt;&gt;().read(in);
+
+struct Pdo { int prop; };
+O&lt;Pdo, P&lt;Pdo, short, &amp;Pdo::prop&gt;&gt;().write(out);
+</pre>
+
+<h4 id="section-2.1">2.1. Values</h4>
+<p>A value is defined with template <span class="term">V</span>. 
+Please refer to <a href="#appendix-I">Appendix I</a> for a comprehensive description of all available variants</p>
+<p><a href="#RFC7159">RFC7159</a> states that a <span class="term">JSON</span> text is a serialized value. 
+E.g. it is not necessarily object or array. 
+<span class="term">cojson</span> support this feature by enabling various possibilities for data bindings.</p>
+<p style="margin-bottom:0">A <span class="term">JSON</span> value can be bound to: </p>
+<ul style="margin-top:0;margin-bottom:0"><li>a property of C++ class (the preferable way),</li>
+<li>a pair of getter/setter method, </li>
+<li>to a static variable,</li>
+<li>to a function, returning pointer to a variable,</li>
+<li>a pair of getter/setter functions.</li>
+</ul>
+<p style="margin-top:0">Values, bound to static variables or functions can also be organized in a 
+<span class="term">JSON</span> array or object. Such objects will further be referred as 
+<em>statically-bound</em> to distinguish them from <em>class-bound</em> objects</p>
+<pre class="brush: cpp; collapse: true; light: false; title: Examples; toolbar: true; notranslate" title="Examples">
+short v1=1;
+long v2=2;
+double v3=3;
+long&amp; func() { return v2; }
+double get()  { return v3; }
+void set(double v)  { v3 = v; }
+V&lt;short, &amp;v1&gt;().write(out);         //  1,
+V&lt;long, func&gt;().write(out);         //  2,
+V&lt;double, get, set&gt;().write(out);   //  3.0
+</pre>
+
+<h4 id="section-2.2">2.2. Objects</h4>
+<p>Class-bound objects are defined with variadic template <span class="code">O</span> that accepts bounding 
+class as the first parameter followed by the list of members. This implies that the class is defined
+upfront. Statically-bound objects are defined with variadic template <span class="code">V</span> with list 
+of members as its parameters.</p>
+<p>Members of class-bound objects are defined with templates <span class="code">P</span>,
+while members of statically-bound objects are defined with templates <span class="code">M</span>. 
+Both of them accept member name as a parameter.</p> 
+
+<h5 id="section-2.2.1">2.2.1. Object Names</h5>
+<p>Direct use of string literals as templates parameters is not supported by C++11. 
+Therefore <span class="term">cojson</span> defines name as a function returning pointer 
+to string <span class="code">const char*</span>. This workaround does not allow inline 
+name definitions, e.g. a name should be declared before its use.</p>
+<pre class="brush: cpp; collapse: true; light: false; title: Examples; toolbar: true; notranslate" title="Examples">
+short var = 1;
+static constexpr const char* myname() noexcept { return &quot;myname&quot;; }
+struct Pdo {
+  static short sprop;
+  long lprop;
+  static constexpr const char* propname() noexcept { return &quot;prop&quot;; }
+} pdo;
+short Pdo::sprop = 2;
+
+V&lt;  // statically-bound object { &quot;myname&quot;:1, &quot;prop&quot;:2 }
+    M&lt;myname,short,&amp;var&gt;,
+    M&lt;Pdo::propname,short,&amp;Pdo::sprop&gt;
+&gt;().write(out);
+
+O&lt;Pdo, // class-bound object { &quot;prop&quot;:2 }
+    P&lt;Pdo,Pdo::propname,long,&amp;Pdo::lprop&gt;
+&gt;().read(pdo, in);	
+</pre>	
+
+<h5 id="section-2.2.2">2.2.2. Nested Objects</h5>
+<p>Both class-bound	and statically-bound classes allow nested objects.
+Nesting in a class-bound object is achieved with a special version of template <span class="code">P</span> that
+accepts additional parameter - structure definition for the nested object.</p>
+<pre class="brush: cpp; collapse: true; light: false; title: Examples; toolbar: true; notranslate" title="Examples">
+struct Config {
+    struct Wan {
+        long uptime;
+    } wan;
+    static constexpr const char* name_wan() noexcept { return &quot;wan&quot;; }
+    static constexpr const char* name_uptime() noexcept { return &quot;uptime&quot;; }
+    static const clas&lt;Config&gt;&amp; structure() noexcept {
+        return
+            O&lt;Config,                                                              //{
+                P&lt;Config, name_wan, Config::Wan, &amp;Config::wan,                     //  &quot;wan&quot;:
+                    O&lt;Wan,                                                         //    {
+                        P&lt;Wan, name_uptime, decltype(Wan::uptime), &amp;Wan::uptime&gt;   //      &quot;uptime&quot;:1
+                    &gt;                                                              //    }
+            &gt;&gt;();                                                                  //}
+    }
+};
+</pre>	
+<p>Nesting in a statically-bound objects is achieved with a is generic version of template 
+<span class="code">M&lt;name,value&gt;</span> where in place of value 
+a nested definition is used.</p>
+<pre class="brush: cpp; collapse: true; light: false; title: Examples; toolbar: true; notranslate" title="Examples">
+short v1=1;
+static constexpr const char* p1() noexcept { return &quot;p1&quot;; }
+static constexpr const char* p2() noexcept { return &quot;p2&quot;; }
+const value&amp; nested() {
+    return
+    V&lt;						//  {
+      M&lt;p1,					//    &quot;p1&quot; :
+        V&lt;					//      {
+          M&lt;p2,short,&amp;v1&gt;    //        &quot;p2&quot;:1
+        &gt;&gt;                   //      }
+    &gt;();                     //  }
+}	
+</pre>	
+
+<h5 id="section-2.2.3">2.2.3. Object Instances</h5>
+<p>A class-bound object needs an instance of that class available for read/write operation. 
+There is no constraints on how that instance is allocated.
+A statically bound object does not need any instance by itself, each of its members may access 
+different kinds of storage and some members may require data storage allocated at compile time.</p>
+
+<h5 id="section-2.2.4">2.2.4. Extra or Missing Members</h5>
+<p>If a <span class="term">JSON</span> text is missing some members defined in a
+<span class="term">cojson</span> object, data fields bound to those members 
+will not be updated and no error condition will be set. An empty object (<span class="code">{}</span>)
+is a valid input for any <span class="term">cojson</span> object.</p>
+<p>Extra members, found in a <span class="term">JSON</span> text, are ignored by default.
+However, this behavior may be altered with a library-wide configuration constant.</p>
+
+<h5 id="section-2.2.5">2.2.5. Zero Objects</h5>
+<p>As per <a href="#RFC7159">RFC7159</a>, a <span class="term">JSON</span> object consist 
+of zero or more name/value pairs (or members).
+<span class="term">cojson</span> does not allow defining zero-member objects. However,
+as it was mentioned above, an empty <span class="term">JSON</span> object 
+(<span class="code">{}</span>) is a valid input.</p>
+	
+<h4 id="section-2.3">2.3. Arrays</h4>
+<p><span class="term">cojson</span> is designed to work with a predefined structure and this design
+imposes certain limitation on arrays - only homogeneous array (<em>vector</em>) may have unspecified length. 
+A heterogeneous array (<em>ordered list</em>) must have each its item defined. 
+</p>
+<h5 id="section-2.3.1">2.3.1. Ordered Lists</h5>
+<p>Ordered lists are defined with variadic template <span class="code">V</span> with list of items as its parameters.
+Every item should also be an instantiation of template <span class="code">V</span>.</p>
+<pre class="brush: cpp; collapse: true; light: false; title: Examples; toolbar: true; notranslate" title="Examples">
+short v1=1, v2=2, v3=3;
+short&amp; func() { return v2; }
+short get()  { return v3; }
+void set(short v)  { v3 = v; }
+V&lt;                          // [
+    V&lt;short, &amp;v1&gt;,          //  1,
+    V&lt;short, func&gt;,         //  2,
+    V&lt;short, get, set&gt;      //  3
+&gt;().write(out);             // ]
+</pre>
+
+<h5 id="section-2.3.2">2.3.2. Vectors</h5>
+<p>Vectors are defined with template <span class="code">V</span> and can be bound to a fixed-size C++ array 
+or to a <em>indexer</em> - a function returning pointer to the requested item. The first form defines a 
+fixed-length array while the second - a variable-length array.</p>	
+<pre class="brush: cpp; collapse: true; light: false; title: Examples; toolbar: true; notranslate" title="Examples">
+int data[4] = { 1,2,3,4 };
+unsigned count = 2;
+static int* arr(unsigned i) noexcept {
+	return i &lt; count ? data + i : nullptr;
+}
+					
+V&lt;int,arr&gt;().write(out);     // [1,2]
+V&lt;int,4,data&gt;().write(out); // [1,2,3,4]
+</pre>
+
+<h5 id="section-2.3.3">2.3.3. Arrays of Objects</h5>
+<p>Vectors are defined with template <span class="code">V&lt;X,S&gt;</span>, 
+where X is an accessor class and S is the object's structure definition.
+Two accessors - <span class="code">accessor::array</span> and <span class="code">accessor::vector</span>
+implement two possible bindings to an indexer or to a static array.</p>
+<pre class="brush: cpp; collapse: true; light: false; title: Examples; toolbar: true; notranslate" title="Examples">
+struct Item {
+    static constexpr const char* name_a() noexcept { return &quot;a&quot;; }
+    static constexpr const char* name_b() noexcept { return &quot;b&quot;; }
+    short a, b;
+};
+
+Item Items[4];
+
+void tutorial_example4(lexer&amp;, ostream&amp; out) {
+    V&lt;accessor::array&lt;Item,4,Items&gt;,
+        O&lt;Item,
+            P&lt;Item, Item::name_a, decltype(a), &amp;Item::a&gt;,
+            P&lt;Item, Item::name_b, decltype(b), &amp;Item::b&gt;
+        &gt;	
+    &gt;().write(out);
+}
+</pre>
+	
+<h5 id="section-2.3.1">2.3.4. Nested Arrays</h5>
+<p>An ordered list may seamlessly include another list or vector.</p>
+<pre class="brush: cpp; collapse: true; light: false; title: Examples; toolbar: true; notranslate" title="Examples">
+int data[4] = { 1,2,3,4 };
+unsigned count = 2;
+static int* arr(unsigned i) noexcept {
+	return i &lt; count ? data + i : nullptr;
+}
+					
+V&lt;                      // [
+    V&lt;int,arr&gt;,         //   [1,2]
+    V&lt;int,4,data&gt;       //   [1,2,3,4]
+&gt;().write(out);         // ]
+</pre>	
+<p>Other variants require more complicated technique: defining a C++ type for the inner 
+array and implementing custom reader/writer for that type.</p>	
+
+<h5 id="section-2.3.1">2.3.5. Arrays in Classes</h5>
+<p>An array field of an C++ class can be added to <span class="term">cojson</span> structure
+with special form of template <span class="code">P</span>.</p>
+<pre class="brush: cpp; collapse: true; light: false; title: Examples; toolbar: true; notranslate" title="Examples">
+struct Pdo {
+    short data[4];
+};
+static constexpr const char* arr() noexcept { return &quot;arr&quot;; }
+Pdo pdo;
+O&lt;Pdo,
+    P&lt;Pdo, arr, short, countof(&amp;Pdo::data), &amp;Pdo::data&gt;
+&gt;().read(pdo,in);
+</pre>
+
+<h5 id="section-2.3.4">2.3.6. Extra or Missing Items</h5>
+<p>Array items from the <span class="term">JSON</span> text that do not fit 
+<span class="term">cojson</span> array definition are skipped and the 
+<span class="code">overrun</span> flag is set in the <span class="code">iostate::error</span>
+If input array is shorter than defined in the structure, remaining items are not updated.</p>
+
+<h4 id="section-2.4">2.4. Numbers</h4>
+<p>A number is defined with template <span class="code">V</span> that accepts the destination data 
+and  binding argument.</p>
+<pre class="brush: cpp; collapse: true; light: false; title: Examples; toolbar: true; notranslate" title="Examples">
+double ldv;
+V&lt;decltype(ldv),&amp;ldv&gt;().read(in);
+</pre>	
+<p><span class="term">cojson</span> supports all fundamental numeric C++ types, except long double.
+When a number from <span class="term">JSON</span> text does not fit the	destination data type,
+an overflow condition occurs. By default <span class="term">cojson</span> ignores overflow.
+This can be altered with configuration constant.</p>
+<h4 id="section-2.5">2.5. Strings</h4>
+<p>A read/write string is defined with template <span class="code">V</span> that accepts string 
+length as the first parameter and data binding (directly array or a function returning pointer).
+A string which is only needed for writing is defined with template <span class="code">V</span>
+with a single parameter - function returning <span class="code">const char*</span> pointer.</p>
+<pre class="brush: cpp; collapse: true; light: false; title: Examples; toolbar: true; notranslate" title="Examples">
+char str[20];
+static char* data() noexcept { return str; }
+static constexpr const char* info() noexcept { return &quot;info&quot;; }
+
+V&lt;20,str&gt;().read(in);
+V&lt;10,data&gt;().read(in);
+V&lt;info&gt;().write(out);	
+</pre>	
+
+<h4 id="section-2.6">2.6. Reading/Writing</h4>
+<p>To read a <span class="term">JSON</span> text you need to pass it through 
+<span class="code">istream</span> interface and <span class="code">lexer</span> instance.
+For writing you need an <span class="code">ostream</span> interface. 
+Please refer to <a href="#section-3">Section-3</a> for more details.</p>
+<p>When read/write operation is complete, application, may examine stream's 
+<span class="code">error()</span> flags to identify possible errors.</p>
+<p>If your <span class="term">JSON</span> text may start with <span class="term">BOM</span>
+sequence, call <span class="code">lexer.skip_bom()</span></p>
+<pre class="brush: cpp; collapse: true; light: false; title: Examples; toolbar: true; notranslate" title="Examples">
+#include &lt;iostream&gt;
+#include &quot;cojson.hpp&quot;
+
+using namespace cojson;
+using namespace details;
+
+class jsonw : public ostream {
+private:
+	std::ostream &amp; out;
+public:
+	inline jsonw(std::ostream&amp; o) noexcept : out(o) {}
+	bool put(char_t c) noexcept {
+		if( out.put(c).good() ) return true;
+		error(details::error_t::ioerror);
+		return false;
+	}
+};
+
+class jsonr : public istream {
+	std::istream&amp; in;
+private:
+	bool get(char_t&amp; c) noexcept {
+		if( in.get(c).good() ) return true;
+		if( in.eof() ) {
+			error(details::error_t::eof);
+			c = iostate::eos_c;
+		} else {
+			error(details::error_t::ioerror);
+			c = iostate::err_c;
+		}
+		return false;
+	}
+public:
+	inline jsonr(std::istream&amp; i) noexcept
+	  :	in(i) {}
+};
+
+using namespace std;
+
+const char * hello() { return &quot;Hello World!&quot;; }
+char answer[10];
+
+int main(int, char**) {
+	jsonr inp(cin);
+	lexer in(inp);
+	jsonw out(cout);
+	V&lt;hello&gt;().write(out);
+	in.skip_bom();
+	V&lt;sizeof(answer),answer&gt;().read(in);
+	return 0;
+}	
+</pre>	
+<h3 id="section-3">3. Implementing Stream Interfaces</h3>
+<p><span class="term">cojson</span> provides  implementation of I/O stream interfaces for
+character buffer only. Luckily, these interfaces need just one method each to implement.</p>
+	
+<h4 id="section-3.1">3.1. <span class="term">istream</span> Interface</h4>
+<pre class="brush: cpp; title: ; notranslate" title="">	
+struct my_istream : istream {
+	bool get(char_t&amp; dst) noexcept {
+	/* Read a single character from the stream, place it in the dst and advance current position.
+	 * Return true on success or false on error.
+	 * In latter case put error code (iostate::eos_c or iostate::err_c) in the dst
+	 * and set error flag with istream::error (error_t::eof or error_t::ioerror)               */
+	}
+};
+</pre>	
+<h4 id="section-3.2">3.2. <span class="term">ostream</span> Interface</h4>
+<pre class="brush: cpp; title: ; notranslate" title="">	
+struct my_ostream : ostream {
+	bool put(char_t c) noexcept {
+	/* Write a single character to the output
+	 * Returns true on success or false on error
+	 * In latter case set error flag with istream::error (error_t::ioerror)    */
+    }
+};
+</pre>
+<h3 id="section-4">4. Building</h3>
+<p>To build application with <span class="term">cojson</span>, add its source 
+directory <span class="code">cojson/src</span> to the include path, add the following source files in your project:</p>
+<ul>
+<li>cojson/src/cojson.cpp</li>
+<li>cojson/src/cojson_libdep.cpp</li>
+<li>cojson/src/chartypetable.cpp</li>
+</ul>
+<p>With avr-g++ instead of chartypetable.cpp you may use chartypetable_progmem.cpp.
+It will save you 256 bytes of RAM.</p>
+<p>On some platform you may get error about missing <span class="code">type_traits</span> and 
+<span class="code">limits</span> files. These files are part of STD C++ library. If your 
+compiler does not find them, it means STD C++ lib is not available on your platform. 
+These files are needed for compilation only and do not introduce any run-time artifact.
+You may use this file from the STD C++ lib on your build machine.</p>
+<pre class="brush: plain; title: ; notranslate" title="">
+$ cd cojson/include
+$ ln -s /usr/include/c++/4.9/limits .
+$ ln -s /usr/include/c++/4.9/type_traits .
+</pre>
+<p>and add cojson/include directory to the include path. Without STD C++ library
+you may also get linker errors about missing symbols <span class="code">__cxa_*</span>
+<span class="code">operator new, operator delete</span>.</p>
+<p><span class="code">cojson</span> does not use <span class="code">new, delete</span>, if your application does the same, 
+you may safely stub those symbols with no implementation.</p>
+<p><span class="code">__cxa_*</span> symbols are part of libc++ abi specification.
+Most critical of possibly missing symbols are <span class="code">__cxa_guard_acquire</span>
+and <span class="code">__cxa_guard_release</span>. You may find a simple implementation 
+for them in <span class="code">test/tools/avrcppfix.cpp</span> or use any other
+suitable implementation.</p>
+<p>On some platforms replacing <span class="code">__cxa_pure_virtual</span> with empty implementation saves sufficient 
+amount of program memory. Perhaps this fact is caused by presence of comprehensive diagnostic 
+messages in the built-in function.</p>
+<h3 id="section-5">5. Advanced Topics</h3>
+<p><span class="code">cojson</span> can be easily extended with new functionality that
+your application may need. This is possible along two axes - (1) parsing/serializing
+a value and (2) delivering the parsed value to the application.</p>
+<p>Parsing and serializing a value is done via reader and writer templates. 
+Delivering the value - with accessor templates.</p>
+
+<h4 id="section-5.1">5.1. User Defined <span class="term">reader</span></h4>
+<p>To define a reader, provide an explicit specialization for template <span class="code">reader</span>
+with the destination type and implement method <span class="code">read</span>. 
+This method should read input text char-by-char from the lexer, transform them into the value of 
+destination type and return true on success or false on error.</p>
+<p>In case of an error it should not leave the lexer in the middle of a lexeme, e.g.
+if error is detected on the first character it should send it back with 
+<span class="code">lexer.back()</span>. If a recoverable error occurs in the middle
+of a lexeme, <span class="code">read</span> should consume remaining characters
+of the lexeme and set error flag <span class="code">error_t::mismatch</span>. 
+On an irrecoverable error, such as syntax violation, reader should set
+<span class="code">error_t::bad</span> flag and return <span class="code">false</span>.</p>
+<pre class="brush: cpp; collapse: true; light: false; title: Examples; toolbar: true; notranslate" title="Examples">
+//cojson reader for std::string
+#include &lt;string&gt;
+#include &quot;cojson.hpp&quot;
+namespace cojson {
+namespace details {
+template&lt;&gt;
+bool reader&lt;std::string&gt;::read(std::string&amp; dst, lexer&amp; in) noexcept  {
+	std::string tmp;
+	bool first = true;
+	ctype ct;
+	char chr;
+	while( (ct=in.string(chr, first)) == ctype::string ) {
+		tmp += chr;
+		first = false;
+	}
+	if( chr ) {
+		in.error(error_t::bad);
+		return false;
+	}
+	dst = tmp;
+	return true;
+}</pre>
+
+<h4 id="section-5.2">5.2. User Defined <span class="term">writer</span></h4>
+<p>To define a writer, provide an explicit specialization for template <span class="code">writer</span>
+with the destination type and implement method <span class="code">write</span>. 
+This method should convert input value to string and put it char-by-char to the 
+output stream and return true on success or false on error.</p>
+<p>Once you have reader/writer, you may used variables of that type for data bindings.</p>
+<pre class="brush: cpp; collapse: true; light: false; title: Examples; toolbar: true; notranslate" title="Examples">
+//cojson writer for std::string
+template&lt;&gt;
+bool writer&lt;std::string&gt;::write(const std::string&amp; str, ostream&amp; out) noexcept {
+	return writer&lt;const char*&gt;::write(str.c_str(), out);
+}
+
+//using std::string
+std::string str;
+V&lt;std::string, &amp;str&gt;().write(out);
+</pre>
+<h4 id="section-5.3">5.3. User Defined <span class="term">accessor</span></h4>
+<p>Accessor is a C++ template that wraps various ways of getting and setting variable 
+value into a uniform, compile-time interface. Namespace 
+<span class="term">cojson::accessor</span> contains several accessors. To create your own,
+copy one most suitable from existing accessor templates, and adjust its parameters
+method implementations and constant values as needed. </p>
+<pre class="brush: cpp; collapse: true; light: false; title: Examples; toolbar: true; notranslate" title="Examples">
+// Custom accessor via class methods.
+// Differs from original by the signatures of setter/getter
+template&lt;class C, typename T, const T&amp; (C::*G)() const,
+	C&amp; (C::*S)(const T&amp;)&gt;
+struct mymethods {
+	typedef C clas;
+	typedef T type;
+	static constexpr bool canget = true;
+	static constexpr bool canset = true;
+	static constexpr bool canlref= false;
+	static constexpr bool canrref= false;
+	static constexpr bool is_vector = false;
+	static inline constexpr bool has() noexcept { return true; }
+	static inline T get(const C&amp; o) noexcept { return (o.*G)(); }
+	static T&amp; lref(const C&amp; o) noexcept; 		/* not possible */
+	static const T&amp; rref(const C&amp;) noexcept;	/* not possible */
+	static inline void set(C&amp; o, const T&amp; v) noexcept { (o.*S)(v); }
+	static inline void init(T&amp;) noexcept { }
+	static inline constexpr bool null(C&amp;) noexcept {
+		return not config::null_is_error;
+	}
+private:
+	mymethods ();
+};
+
+// Using custom accessor
+struct Do {
+  const int&amp; get() const;
+  Do&amp; set(const int&amp;);
+  static const char* name() { return &quot;val&quot;; }
+  bool read(lexer&amp; in) {
+    return O&lt;Do,P&lt;Do,&amp;Do::name,
+      mymethods&lt;Do,int,&amp;Do::get,&amp;Do::set&gt;&gt;&gt;().read(*this,in);
+  }
+};</pre>
+
+<h4 id="section-5.4">5.4. Configuring <span class="term">cojson</span></h4>
+<p><span class="term">cojson</span> is configured with a set of <span class="code">constexpr</span>
+values grouped in the <span class="code">config</span> structure and externalized into an includeable
+file <span class="code">cojson.config</span>. You may adjust that file or create your own 
+<span class="code">cojson.config</span> file in another location, located on the include path
+earlier than the original <span class="code">cojson.config</span>.</p>
+<table class="table">
+<tr><th>Symbol</th><th>Values</th><th>When specified...</th></tr>
+<tr><td rowspan="3">overflow</td><td>saturate</td><td>numbers are saturated on overflow</td></tr>
+<tr><td>error</td><td>overflow causes an error</td></tr>
+<tr><td>ignore</td><td>overflow condition silently ignored</td></tr>
+<tr><td rowspan="2">mismatch</td><td>skip</td><td>reader makes best efforts to skip such values</td></tr>
+<tr><td>error</td><td>any mismatch in size or data type is treated as an irrecoverable error</td></tr>
+<tr><td rowspan="2">null</td><td>skip</td><td>skip nulls by default</td></tr>
+<tr><td>error</td><td>default handling for null is raising irrecoverable error</td></tr>
+<tr><td rowspan="2">iostate</td><td>_notvirtual</td><td>stream's error method are not virtual</td></tr>
+<tr><td>_virtual</td><td>stream's error method are virtual. 
+This allows to implement better error reporting by overriding iostate::error methods</td></tr>
+<tr><td rowspan="2">temporary</td><td>static</td><td>temporary buffer is implemented static</td></tr>
+<tr><td>_automatic</td><td>temporary buffer is implemented automatic (allocated on the stack)</td></tr>
+<tr><td>temporary_size</td><td>&lt;number&gt;</td><td>overrides temporary buffer size</td></tr>
+<tr><td rowspan="2">cstring</td><td>avr_progmem</td><td>use progmem for defining literals and member names (AVR only)</td></tr>
+<tr><td>const_char</td><td>literals and member names are defined constant strings (const char*), default</td></tr>
+</table>
+<h3 id="section-R">Normative References</h3>
+<ol>
+<li><a href="https://tools.ietf.org/html/rfc7159" name="RFC7159" target="_blank">RFC7159</a></li>
+</ol>
+<h3 id="section-I">Informative References</h3>
+<ol>
+<li><a href="http://libcxxabi.llvm.org/spec.html" target="_blank">libc++abi Specification</a></li>
+</ol>
+<h3 id="appendix-I">Appendix I. Guide Map</h3>
+<table class="table guide">
+<tr><th><span class="term">JSON</span> text</th><th>C++</th><th><span class="term">cojson</span> definition</th><th>Comments</th></tr>
+<tr><td colspan="4" style="text-align:center"><h5 style="margin:0">
+Statically bound values
+</h5></td></tr>	
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">123</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">long myvar;</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">V&lt;long,&amp;myvar&gt;</pre></td><td>Value bound to a variable. The simplest binding</td></tr>
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">345</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">short&amp; myfunc() {
+  static short myvar;
+  return myvar;
+}</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">V&lt;long,myfunc&gt;</pre></td><td>
+Value bound to a function returning reference.
+Bindings via functions allows application to detect presence 
+of the value in the stream and perform on-demand space allocation
+</td></tr>
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">678</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">int* myfunc() {
+  static int myvar;
+  return &amp;myvar;
+}</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">V&lt;int,myfunc&gt;</pre></td><td>
+Value bound to a function returning pointer. In this binding
+function may return <span class="code">nullptr</span> if value 
+is not available. Because of this <span class="code">cojson</span>
+calls it twice per value.
+</td></tr>
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">true</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">static bool myval;
+bool my_get() { 
+  return myval; }
+void my_set(bool val) { 
+  myval = val; }
+</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">V&lt;bool,my_get,my_set&gt;</pre></td><td>
+Value bound to a getter/setter pair. This binding allows handling values
+with no storage behind and perform validation of the parsed values</td></tr>
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">&quot;a string&quot;</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">char mystring[24];</pre></td>
+<td><pre class="brush: cpp; light: true; title: ; notranslate" title="">V&lt;24,mystring&gt;</pre></td><td>
+String bound to an array of char.
+</td></tr>
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">&quot;output only&quot;</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">const char* msg() { 
+  return &quot;output only&quot;;
+}</pre></td>
+<td><pre class="brush: cpp; light: true; title: ; notranslate" title="">V&lt;msg&gt;</pre></td><td>
+A string value available for writing only.
+The content does not have to be constant.
+</td></tr>
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">&quot;a string&quot;</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">char* data = nullptr;
+static char* mystr() {
+  if( data == nullptr ) 
+    data = (char*) malloc(64);
+  return data;}</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">V&lt;64,mystr&gt;</pre></td><td>
+String binding via a function returning pointer
+</td></tr>
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">[1,2,3,4]</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">int data[4];</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">V&lt;int,4,data&gt;</pre></td><td>
+Array (vector) bound to a C++ array
+</td></tr>
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">[1,2,3]</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">int data[4];
+size_t count = 3;
+int* func(size_t i) {
+  return i&lt;count 
+    ? data+i : nullptr;
+}</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">V&lt;int,func&gt;</pre></td><td>
+Vector binding via a function. It allows controlling array length
+</td></tr>
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">[2.1, &quot;kg&quot;]</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">double val;
+char unit[8];</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">V&lt; V&lt;double,&amp;val&gt;,
+   V&lt;8,unit&gt;&gt;</pre></td><td>
+Heterogeneous array bound to static variables
+</td></tr>
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">{&quot;v&quot;:20}</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">int v1;</pre></td>
+<td><sup style="float:left;font-size:60%"><a href="#fn1" 
+title="NAME here is a macro that defines a name">1</a></sup>
+<pre class="brush: cpp; light: true; title: ; notranslate" title="">NAME(v)
+V&lt; M&lt;v, int, &amp;v1&gt; &gt;
+</pre></td><td>
+Object with a member bound to static variable.
+</td></tr>
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">{&quot;u&quot;:&quot;s&quot;}</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">char u1[8];</pre></td>
+<td><pre class="brush: cpp; light: true; title: ; notranslate" title="">NAME(u)
+V&lt; M&lt;u, V&lt;8,  u1&gt;&gt; &gt;
+</pre></td><td>
+Object with a member bound to a <span class="term">cojson</span> value.</td></tr>
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">{&quot;s&quot;:&quot;x&quot;}</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">char* data;
+static char* mystr() {
+  return data;
+}
+</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">NAME(s)
+V&lt;M&lt;s,16,mystr&gt;&gt;</pre></td><td>
+Object with a string member bound to a function
+</td></tr>
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">{&quot;v&quot;:4}</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">char&amp; myfunc() {
+  static char myvar;
+  return myvar;
+}</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">NAME(v)
+V&lt;M&lt;v,char,myfunc&gt;&gt;</pre></td><td>
+Member bound to a function returning reference.</td></tr>
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">{&quot;v&quot;:5}</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">
+static double myvar;
+double* myfunc() {
+  return &amp;myvar;
+}</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">NAME(v)
+V&lt;M&lt;v,doublemyfunc&gt;&gt;</pre></td><td>
+Member bound to a function returning pointer.</td></tr>
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">{&quot;led&quot;:0}</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">int get() {
+  return PORTA&amp;LED_BIT;}
+void set(int v) {
+  if(v) PORTA|=LED_BIT;
+  else PORTA&amp;=~LED_BIT;}</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">NAME(led)
+V&lt;M&lt;led,
+ functions&lt;int,get,set&gt;
+&gt;&gt;</pre></td><td>
+Member bound to a pair of functions
+</td></tr>
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">{&quot;a&quot;:&quot;info&quot;}</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">const char* info() { 
+  return &quot;info&quot;;
+}</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">NAME(a)
+V&lt;M&lt;a,info&gt;&gt;</pre></td><td>
+Member bound to an output only string </td></tr>
+<tr><td colspan="4" style="text-align:center"><h5 style="margin:0">
+Class bound objects and their members
+</h5></td></tr>	
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">{ ... }</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">struct Pdo {
+//...
+};</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">O&lt;...&gt;</pre></td><td>
+Class bound object</td></tr>
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">{&quot;a&quot;:&quot;15.10.20&quot;}</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">struct Pdo {
+  char a[16];
+};</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">NAME(a)
+O&lt;Pdo,
+  P&lt;Pdo,16,&amp;Pod::a&gt;&gt;</pre></td><td>
+Member bound to a class property</td></tr>
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">{&quot;led&quot;:true}</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">struct Pdo {
+  bool get() { 
+    return PORTA&amp;LED_BIT;}}
+  void set(bool v) { 
+    if(v) PORTA|=LED_BIT;
+    else PORTA&amp;=~LED_BIT;}
+};</pre></td><td class="smaller"><pre class="brush: cpp; light: true; title: ; notranslate" title="">NAME(led)
+O&lt;Pdo,
+ M&lt;Pdo,led,methods&lt;
+  bool,Pdo::get,Pdo::set&gt;
+&gt;&gt;</pre></td><td>
+Member bound via getter/setter methods</td></tr>
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">{&quot;a&quot;:15}</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">struct Pdo {
+  int a;
+};</pre></td><td class="smaller"><pre class="brush: cpp; light: true; title: ; notranslate" title="">NAME(a)
+O&lt;Pdo,
+  P&lt;Pdo,int,&amp;Pod::a&gt;&gt;</pre></td><td>
+String member bound to a class property</td></tr>
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">{&quot;a&quot;:[1,2]}</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">struct Pdo {
+  short a[2];
+};</pre></td><td class="smaller"><pre class="brush: cpp; light: true; title: ; notranslate" title="">NAME(a)
+O&lt;Pdo, 
+  P&lt;Pdo,a,short,
+    2,&amp;Pdo::a&gt;&gt;</pre></td><td>
+Array-vector bound to an array property of class Pdo</td></tr>
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">{&quot;a&quot;:{&quot;b&quot;:10}}</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">struct Pdo {
+  struct A {
+	int b;
+  } a;};</pre></td><td class="smaller"><pre class="brush: cpp; light: true; title: ; notranslate" title="">NAME(a) NAME(b)
+O&lt;Pdo, P&lt;Pdo,a,Pdo::A,&amp;Pdo::a,
+  O&lt;Pdo::A,
+    P&lt;Pdo::A,b,int,&amp;Pdo::A::b&gt;&gt;&gt;&gt;</pre></td><td>
+Nested object</td></tr>
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">{&quot;a&quot;:[{&quot;b&quot;:1},
+       {&quot;b&quot;:2}]}</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">struct Pdo {
+  struct A {
+    int b;
+  } a[2];
+};</pre></td><td class="smaller"><pre class="brush: cpp; light: true; title: ; notranslate" title="">NAME(a) NAME(b)
+O&lt;Pdo, P&lt;Pdo,a,Pdo::A,2,Pdo::a,
+  O&lt;Pdo::A,
+    P&lt;Pdo::A,b,int,&amp;Pdo::A::b&gt;&gt;&gt;&gt;</pre></td><td>
+Nested array of objects</td></tr>
+<tr><td><pre class="brush: jscript; title: ; notranslate" title="">[{&quot;a&quot;:1},
+ {&quot;a&quot;:2}]</pre></td><td><pre class="brush: cpp; light: true; title: ; notranslate" title="">struct Pdo {
+  int a;
+} pdo[2];</pre></td><td class="smaller"><pre class="brush: cpp; light: true; title: ; notranslate" title="">NAME(a)
+V&lt;array&lt;Pdo,2,pdo&gt;,
+ O&lt;Pdo,P&lt;a,int,&amp;Pdo::a&gt;&gt;&gt;</pre></td><td>
+Array of objects</td></tr>	
+</table>
+<p><sup id="fn1">1</sup>NAME here is a macro that defines a <span class="term">cojson</span> name</p>
+<pre class="brush: cpp; title: ; notranslate" title="">#define NAME(s) static inline constexpr const char* s() noexcept { return #s; }</pre>
+				</div>
+			</div><!-- .post -->
+
+		</div><!-- #content .hfeed -->
+	</div><!-- #container -->
+
+<script type='text/javascript' src='http://hutorny.in.ua/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/scripts/shCore.js?ver=3.0.9b'></script>
+<script type='text/javascript' src='http://hutorny.in.ua/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/scripts/shBrushCpp.js?ver=3.0.9b'></script>
+<script type='text/javascript' src='http://hutorny.in.ua/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/scripts/shBrushJScript.js?ver=3.0.9b'></script>
+<script type='text/javascript' src='http://hutorny.in.ua/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/scripts/shBrushPlain.js?ver=3.0.9b'></script>
+<script type='text/javascript'>
+	(function(){
+		var corecss = document.createElement('link');
+		var themecss = document.createElement('link');
+		var corecssurl = "http://hutorny.in.ua/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/styles/shCore.css?ver=3.0.9b";
+		if ( corecss.setAttribute ) {
+				corecss.setAttribute( "rel", "stylesheet" );
+				corecss.setAttribute( "type", "text/css" );
+				corecss.setAttribute( "href", corecssurl );
+		} else {
+				corecss.rel = "stylesheet";
+				corecss.href = corecssurl;
+		}
+		document.getElementsByTagName("head")[0].insertBefore( corecss, document.getElementById("syntaxhighlighteranchor") );
+		var themecssurl = "http://hutorny.in.ua/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/styles/shThemeEclipse.css?ver=3.0.9b";
+		if ( themecss.setAttribute ) {
+				themecss.setAttribute( "rel", "stylesheet" );
+				themecss.setAttribute( "type", "text/css" );
+				themecss.setAttribute( "href", themecssurl );
+		} else {
+				themecss.rel = "stylesheet";
+				themecss.href = themecssurl;
+		}
+		//document.getElementById("syntaxhighlighteranchor").appendChild(themecss);
+		document.getElementsByTagName("head")[0].insertBefore( themecss, document.getElementById("syntaxhighlighteranchor") );
+	})();
+	SyntaxHighlighter.config.strings.expandSource = '+ expand source';
+	SyntaxHighlighter.config.strings.help = '?';
+	SyntaxHighlighter.config.strings.alert = 'SyntaxHighlighter\n\n';
+	SyntaxHighlighter.config.strings.noBrush = 'Can\'t find brush for: ';
+	SyntaxHighlighter.config.strings.brushNotHtmlScript = 'Brush wasn\'t configured for html-script option: ';
+	SyntaxHighlighter.defaults['light'] = true;
+	SyntaxHighlighter.defaults['pad-line-numbers'] = true;
+	SyntaxHighlighter.all();
+</script>
+</div><!-- #wrapper -->
+
+</body><!-- end trasmission -->
+</html>

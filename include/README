@@ -1,0 +1,8 @@
+# Neither avr-gcc nor avrlibc have stl. 
+# This project needs only compile-time support from stl: 
+# <type_traits>, <limits> 
+# Therefore, as a workaround, host's stl is used.
+# bits folder contains truncated copy of host's c++config.h
+ln -s /usr/include/c++/4.9/limits   
+ln -s /usr/include/c++/4.9/type_traits
+ln -s /usr/include/c++/4.9/bits/c++0x_warning.h bits/

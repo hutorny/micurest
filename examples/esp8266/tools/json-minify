@@ -1,0 +1,3 @@
+#/bin/bash
+nodejs `dirname $0`/node_modules/json-minify $*
+

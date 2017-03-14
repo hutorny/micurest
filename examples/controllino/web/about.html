@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf8">
+<title>About &#x3BC;cuREST Demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="About &#x3BC;cuREST Demo for Controllino">
+<meta name="author" content="">
+<link rel="stylesheet" href="http://r.iot-ware.com/w/css/responsive.css">
+<link rel="stylesheet" href="http://r.iot-ware.com/w/css/style.css">
+<style>
+a {
+	font-weight: bold;
+	color: #9C3600;
+}
+</style>
+</head>
+
+<body lang=UK>
+<div id="container">
+<h1>About</h1>
+<p>This is an example of implementing REST services for an Arduino platform, or more specifically &ndash; Controllino MAXI PLC. 
+The intent of this example is to demonstrate &mu;cuREST capabilities and show technics for implementing various REST resources with &mu;cuREST: 
+plain variables, objects, custom-stringified variables (such as IP and MAC addresses), web pages and binary data.</p>
+<p>This example exposes a set of URI&rsquo;s for communicating between PLC and the browser. </p>
+<table>
+<tbody>
+<tr>
+<th>URI</th>
+<th>Methods</th>
+<th>Description</th>
+</tr>
+<tr>
+<td><a href="/io">/io</a></td>
+<td>GET</td>
+<td>Returns bootstrap html page with embedded io data</td>
+</tr>
+<tr>
+<td><a href="/*">/*</a></td>
+<td>All<sup>
+<a title="All supported method: GET/PUT/POST" href="#_ftn1">[1]</a>,
+<a title="POST/PUT data must not include sections" href="#_ftn2">[2]</a>
+</sup></td>
+<td>Returns states of all inputs/outputs as a JSON object</td>
+</tr>
+<tr>
+<td><a href="/d/*">/d/*</a></td>
+<td>All</td>
+<td>Returns/controls states of all digital outputs (D0-D11) as a JSON array</td>
+</tr>
+<tr>
+<td><a href="/d/0">/d/<em>&lt;N&gt;</em></a></td>
+<td>All</td>
+<td>Returns/controls state of digital output D<em>&lt;N&gt;</em>, where <em>&lt;N&gt;</em> is 0 to 11</td>
+</tr>
+<tr>
+<td><a href="/r/*">/r/*</a></td>
+<td>All</td>
+<td>Returns/controls states of all relay outputs (R0-R9) as a JSON array</td>
+</tr>
+<tr>
+<td><a href="/r/0">/r/<em>&lt;N&gt;</em></a></td>
+<td>All</td>
+<td>Returns/controls state of relay output R0<em>&lt;N&gt;</em>, where <em>&lt;N&gt;</em> is 0 to 9</td>
+</tr>
+<tr>
+<td><a href="/a/*">/a/*</a></td>
+<td>GET</td>
+<td>Returns states of all analog inputs (A0-A9) as a JSON array</td>
+</tr>
+<tr>
+<td><a href="/a/0">/a/<em>&lt;N&gt;</em></a></td>
+<td>GET</td>
+<td>Returns state of analog input A<em>&lt;N&gt;</em>, where <em>&lt;N&gt;</em> is 0 to 9</td>
+</tr>
+<tr>
+<td><a href="/in/*">/in/*</a></td>
+<td>GET</td>
+<td>Returns states of all interrupt inputs (IN0-IN1) as a JSON array</td>
+</tr>
+<tr>
+<td><a href="/in/0">/in/<em>&lt;N&gt;</em></a></td>
+<td>GET</td>
+<td>Returns state of interrupt input IN<em>&lt;N&gt;</em>, where <em>&lt;N&gt;</em> is 0 to 1</td>
+</tr>
+<tr>
+<td><a href="/demo">/demo</a></td>
+<td>GET</td>
+<td>Returns bootstrap html page with an enum - list of pin modes </td>
+</tr>
+<tr>
+<td><a href="/logical">/logical</a></td>
+<td>All</td>
+<td>Returns/accepts content of variable<sup><a title="All variables are allocated on PLC&rsquo;s RAM" href="#_ftn3">[3]</a></sup> <strong>bool</strong> <strong>logical</strong> </td>
+</tr>
+<tr>
+<td><a href="/natural">/natural</a></td>
+<td>All</td>
+<td>Returns/accepts content of variable <strong>unsigned</strong> <strong>natural</strong> </td>
+</tr>
+<tr>
+<td><a href="/text">/text</a></td>
+<td>All</td>
+<td>Returns/accepts content of variable <strong>char text[32]</strong></td>
+</tr>
+<tr>
+<td><a href="/mode">/mode</a></td>
+<td>All</td>
+<td>Returns/accepts content of variable <strong>enum mode_t mode</strong> </td>
+</tr>
+<tr>
+<td><a href="/modes">/modes</a></td>
+<td>GET</td>
+<td>Returns list of <strong>enum mode_t</strong> values</td>
+</tr>
+<tr>
+<td><a href="/mac">/mac</a></td>
+<td>All</td>
+<td>Returns/accepts content of variable <strong>mac_addr mac</strong></td>
+</tr>
+<tr>
+<td><a href="/ip">/ip</a></td>
+<td>All</td>
+<td>Returns/accepts content of variable <strong>ip_addr ip</strong></td>
+</tr>
+<tr>
+<td><a href="/rtc">/rtc</a></td>
+<td>All</td>
+<td>Returns/accepts data from/to PLC&rsquo;s Real Time Clock</td>
+</tr>
+<tr>
+<td><a href="/blob" download>/blob</a></td>
+<td>All</td>
+<td>Returns/accepts binary object &ndash; content of array <strong>byte blob[1400]</strong></td>
+</tr>
+</tbody>
+</table>
+<p>For more information about &mu;cuREST please visit these links:</p>
+<ul>
+<li><a href="http://hutorny.in.ua/projects/micurest/micurest-an-application-server-for-constrained-platforms" target="_new">&#x3BC;cuREST - an application server for constrained platforms</a></li>
+<li><a href="http://hutorny.in.ua/projects/micurest/micurest-tutorial" target="_new">&#x3BC;cuREST Tutorial</a></li></ul>
+<p>Source code for this example can be found on <a href="https://github.com/hutorny/micurest/tree/master/examples/arduino" target="_new">github.</a></p>
+<div><br clear="all" /><hr size="1"  />
+<p>
+<a title="" href="#_ftnref1"><sup>[1]</sup></a> All supported method: GET/PUT/POST<br>
+<a title="" href="#_ftnref2"><sup>[2]</sup></a> POST/PUT data must not include sections <em>a</em> and <em>in</em><br>
+<a title="" href="#_ftnref3"><sup>[3]</sup></a> All variables are allocated on PLC&rsquo;s RAM</p>
+</div>
+</div>
+<div id="copyright">Copyright &copy; 2017 Eugene Hutorny <span id="copyright-email">@</span></div>
+</body>
+<script>
+function $array(sel) {
+	if( sel === null ) return [];
+	return Array.apply(null, document.querySelectorAll(sel)); 
+};
+
+function rebase(hash) {
+	$array('a[href^="/"]').forEach(function(a) {
+		console.log(location.protocol, hash, a.getAttribute('href'));
+		a.setAttribute('href', hash ? location.protocol + '//' + hash + a.getAttribute('href') : '#');		
+	});	
+}
+try {
+	rebase(location.hash.slice(1));
+} catch(e) {}
+</script>
+</html>
