@@ -164,7 +164,7 @@ TESTS-BASIC := $(wildcard $(addprefix $(BASE-DIR)/suites/basic/, *.c *.cpp))
 TESTS-BENCH := $(wildcard $(addprefix $(BASE-DIR)/suites/bench/, *.c *.cpp))
 TESTS-HOST  := $(wildcard $(addprefix $(BASE-DIR)/suites/host/,  *.c *.cpp))
 TESTS-REST  := $(wildcard $(addprefix $(BASE-DIR)/suites/http/,  *.c *.cpp))
-TESTS-ALL   := $(notdir $(TESTS-BASIC) $(TESTS-BENCH))
+TESTS-ALL   := $(sort $(notdir $(TESTS-BASIC) $(TESTS-BENCH)))
 
 teensy3-OBJS := $(patsubst %.c,%.o,$(TESTS-ALL:.cpp=.o))
 teensy3a-OBJS := $(patsubst %.c,%.o,$(TESTS-HOST:.cpp=.o))

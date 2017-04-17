@@ -20,8 +20,10 @@
  */
 #include <string.h>
 #include "micurest.hpp"
+#include "miculog.hpp"
 
 namespace micurest {
+const miculog::Log<application> log;
 /*
  * 	TODO CoAP support for immediate ACK
  * 	TODO CoAP message ID handling and dedups
@@ -204,7 +206,23 @@ inline media::type httpmessage::read_mediatypetext() noexcept {
 		}
 		break;
 	}
-	if( config::strict_http01 && is_ver_01() ) error(status_t::Bad_Option);
+	if( config::strict_http01 ) if( is_ver_01() ) error(status_t::Bad_Option);
+	return media::unknown;
+}
+
+inline media::type httpmessage::read_mediatypeappj() noexcept {
+	if( get() )
+	switch( curr ) {
+	case appc::javascript()[1]: return literal1(app::javascript()+2, CSLF);
+	case appc::json()[1]:
+		switch(literal3(app::jsonrequest()+2,app::json_rpc()+2,
+				app::json()+2, CSLF)) {
+		case 1: return media::jsonrequest;
+		case 2: return media::json_rpc;
+		case 3: return media::json;
+		}
+	}
+	if( config::strict_http01 ) if( is_ver_01() ) error(status_t::Bad_Option);
 	return media::unknown;
 }
 
@@ -214,18 +232,14 @@ inline media::type httpmessage::read_mediatypeapp() noexcept {
 	case lic::media_type::any()[0]:
 		return media::anyapp;
 	case appc::javascript()[0]:
-		switch( literals(app::javascript()+1, app::json()+1, CSLF)) {
-		case 1: return media::javascript;
-		case 2: return media::json;
-		}
-		break;
+		return httpmessage::read_mediatypeappj();
 	case appc::octet_stream()[0]:
 		if( literal1(app::octet_stream()+1, CSLF) )
 			return media::octet_stream;
 		break;
 	}
 	//TODO application/xhtml+xml
-	if( config::strict_http01 && is_ver_01() ) error(status_t::Bad_Option);
+	if( config::strict_http01 ) if( is_ver_01() ) error(status_t::Bad_Option);
 	return media::unknown;
 }
 
@@ -364,18 +378,14 @@ bool httpmessage::read_etag() noexcept {
 bool httpmessage::literal1_ic(cstring  lit,
 						   const delimiters& dlm) noexcept {
 	while( *lit && get() && lit::same(curr,*lit) ) ++lit;
-	return *lit == 0 && get() && (equals(curr,dlm) ||
-		/* special case dlm == lit::LF, accept CRLF as well */
-		(equals(dlm,lit::LF) && curr == lit::CR && get() && curr == lit::LF));
+	return *lit == 0 && get() && isdlmcrlf(dlm);
 }
 
 
 bool httpmessage::literal1(cstring  lit,
 						   const delimiters& dlm) noexcept {
 	while( *lit && get() && curr == *lit ) ++lit;
-	return *lit == 0 && get() && (equals(curr,dlm) ||
-		/* special case dlm == lit::LF, accept CRLF as well */
-		(equals(dlm,lit::LF) && curr == lit::CR && get() && curr == lit::LF));
+	return *lit == 0 && get() && isdlmcrlf(dlm);
 }
 
 unsigned char httpmessage::literals(cstring lit1, cstring lit2,
@@ -383,6 +393,7 @@ unsigned char httpmessage::literals(cstring lit1, cstring lit2,
 	while( *lit1 == *lit2 && get() && curr == *lit1 )
 		++lit1, ++lit2;
 	if( ! get() ) return 0;
+	//FIXME if *lit1 == 0
 	if( *lit1 == curr ) return literal1(++lit1, dlm) ? 1 : 0;
 	if( *lit2 == curr ) return literal1(++lit2, dlm) ? 2 : 0;
 	return 0;
@@ -391,13 +402,13 @@ unsigned char httpmessage::literals(cstring lit1, cstring lit2,
 /** lit3 must have the shortest common start sequence */
 unsigned char httpmessage::literal3(cstring lit1, cstring lit2, cstring lit3,
 									const delimiters& dlm) noexcept {
-	while( *lit1 == *lit2 && *lit1 == *lit3 && get() && curr == *lit1 )
+	while( *lit3 == *lit1 && *lit3 == *lit2 && get() && curr == *lit3 )
 		++lit1, ++lit2, ++lit3;
 	if( ! get() ) return 0;
+	if( *lit3 == 0 && isdlmcrlf(dlm) ) return 3;
 	if( *lit3 == curr ) return literal1(++lit3, dlm) ? 3 : 0;
 	return literals(++lit1, ++lit2, dlm);
 }
-
 
 bool httpmessage::read_connection() noexcept {
 	skip_ws();			/* https://tools.ietf.org/html/rfc7232#section-2.3  */
@@ -487,12 +498,13 @@ application::result_t application::service(istream& in, ostream& out,
 				fixed by length, target reads it till the end triggering EOF.
 				Because of this issue json messages require extra CRLF
 				in the end													*/
-				// dbg("eof=%d good=%d state=%d status=%d\n", in.eof(), in.isgood(), msg.state, msg.resp.status );
+				//log.debug("eof=%d good=%d state=%d status=%d\n", in.eof(), in.isgood(), msg.state, msg.resp.status );
 				if( in.eof() && in.isgood() && msg.state == httpmessage::state_t::body) {
 					if( pdo ) {
 						msg.save(*pdo);
 						return result_t::fragment;
 					}
+					log.info("no saved session, cannot continue with a fragment\n");
 					msg.error(status_t::Service_Unavailable);
 				}
 				if( pdo ) pdo->clear();

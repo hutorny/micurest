@@ -1,0 +1,97 @@
+body {
+	display: flex;
+	background: #FFFFFC !important;
+	color: #0D0300
+}
+
+body > div {
+	width: 20%;
+}
+
+body > div#main {
+	width: 60%;
+}
+
+::-webkit-input-placeholder { 
+	color: rgba(0, 0, 0, 0.5);	
+	font-style: italic;
+}
+::-moz-placeholder{ 
+	color: rgba(0, 0, 0, 0.5);	
+	font-style: italic;
+}
+:-ms-input-placeholder{ 
+	color: rgba(0, 0, 0, 0.5);	
+	font-style: italic;
+}
+
+span.jserror {
+    color: #DD0306;
+    font-style: italic;
+}
+
+span.error,
+span.call, 
+#main > input {
+   font-family: monospace;
+   font-weight: 800;
+}
+
+div.func,
+div.const {
+   font-family: monospace;	
+}
+
+span.call {
+	display: inline-block;
+	min-width: 200px;
+}
+
+span.error {
+	color: red;
+}
+
+.navigation {
+    position: absolute;
+  		top: 1em;
+}
+.navigation, .navigation ul {
+  		display: block;
+  		list-style-type: none;
+  		margin: 0;
+}
+.navigation li {
+  		float: left;
+  		margin: 0;
+  		padding: 0;
+  		position: relative;		
+}
+
+div#right,
+div#left {
+	padding-left: 1em;
+	padding-top: 1em;
+}
+
+div#right > label,
+div#left > label {
+	margin-top: 1em;
+}
+
+#copyright {
+	text-align: center;
+	font-size: 80%;
+	color: #330C00;
+	opacity: 0.6;
+    position: absolute;
+    left: calc(50% - 141px);
+    bottom : 0;
+}
+
+#copyright #copyright-email:before {
+	content: 'eugene';
+}
+
+#copyright #copyright-email:after {
+	content: 'hutorny.in.ua';
+}

@@ -20,9 +20,7 @@
  * along with the COJSON Library; if not, see
  * <http://www.gnu.org/licenses/gpl-2.0.html>.
  */
-
-#ifndef COJSON_HELPERS_HPP_
-#define COJSON_HELPERS_HPP_
+#pragma once
 #include <type_traits>
 #include <limits>
 #include <stdint.h>
@@ -103,7 +101,7 @@ struct has_read : decltype(test_read<C,T>(0)){};
 
 template<class C, typename T>
 static auto test_write(int) -> sfinae_true<
-	decltype(std::declval<const C&>().write(std::declval<T>()))>;
+	decltype(std::declval<C>().write(std::declval<T>()))>;
 template<class C, typename T>
 static auto test_write(long) -> std::false_type;
 template<class C, typename T>
@@ -131,6 +129,8 @@ struct numeric_helper_signed {
 	static constexpr T min = std::numeric_limits<T>::min();
 	static constexpr inline bool is_negative(T v) noexcept { return v < 0; }
 	static constexpr inline U abs(T v) noexcept { return v >= 0 ? v : -v; }
+	/** unsigned type without reference */
+	typedef typename std::remove_reference<U>::type V;
 };
 template<typename T>
 struct numeric_helper : std::conditional<std::is_signed<T>::value,
@@ -141,6 +141,7 @@ struct numeric_helper : std::conditional<std::is_signed<T>::value,
 		return v > static_cast<unsigned long long>(max) / 10ULL ?
 			static_cast<T>(v) : figure(v*10ULL);
 	}
+	/** unsigned type without reference */
 	static constexpr T pot = figure(10ULL); /** highest power of ten */
 };
 
@@ -229,8 +230,3 @@ inline bool match<progmem<char>,char*>(progmem<char> a, char* b) noexcept {
 
 } // namespace details
 } //namespace cojson
-#endif //COJSON_HELPERS_HPP_
-
-
-
-

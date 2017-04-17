@@ -141,6 +141,7 @@ MICUREST-OBJS :=															\
   cojson_progmem.o															\
   micurest.o																\
   micurest_progmem.o														\
+  miculog_arduino.o															\
   network_arduino.o															\
   chartypetable_progmem.o													\
 

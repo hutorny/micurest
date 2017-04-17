@@ -51,8 +51,8 @@ const directory& resourceMap() noexcept {
 /* define an application instance associated with the map */
 application rest(resourceMap());
 
-/* instance of a tcp server, bbound to port 80            */
-network_arduino::proto::tcp server(80);
+/* instance of a tcp server, running the rest application            */
+network_arduino::tcp::server server(rest);
 static uint8_t mac[]={0xC2,0xB5,0x52,0x45,0x53,0x54};
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
@@ -63,17 +63,10 @@ void setup() {
   Ethernet.begin(mac);
   Serial.print("server IP is ");
   Serial.println(Ethernet.localIP());  
-  // start listening 
-  server.listen(); 
+  // start listening on port 80 
+  server.listen(80); 
 }
 
 void loop() {
-  if( server.accept() ) {  
-    Serial.print(".");  
-    // start HTTP session
-    network_arduino::proto::tcp::connection client(server);
-    // service HTTP request using rest application
-    network::proto::http::service(client, rest);
-  }
-
+	server.run();
 }

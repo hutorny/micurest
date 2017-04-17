@@ -10,6 +10,10 @@ Please see [about.html](web/about.html) for a list of published URIs
 
 # Build Steps
 
+This section describes how to build this example from command line.
+To build with Arduino Studio, please use examples that come with Micurest
+Arduino Library. 
+
 ## Install gcc-avr
 
 `sudo apt-get install gcc-avr`

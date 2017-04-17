@@ -186,6 +186,13 @@ smart-DEFS :=																\
   COJSON_TEST_OMIT_NAMES													\
   CSTRING_PROGMEM															\
 
+smarta-DEFS :=																\
+  COJSON_TEST_OMIT_NAMES													\
+  CSTRING_PROGMEM															\
+
+smartb-DEFS :=																\
+  COJSON_TEST_OMIT_NAMES													\
+  CSTRING_PROGMEM															\
 
 smartr-DEFS :=																\
   CSTRING_PROGMEM															\

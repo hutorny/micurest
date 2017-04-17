@@ -341,7 +341,7 @@ const directory& root() noexcept {
 					digital_read, digital_write, digital_has>>>>,
 			E<identity::numeric,						/// /d/0 .. /d/11
 				N<micurest::accessor::vector<byte,
-					digital_read, digital_write, digital_has>>>>,
+					digital_read, digital_write, digital_has>,media::json>>>,
 		/* directory r	 													*/
 		D<name::r,										/// /r
 			E<name::X,									/// /r/*
@@ -349,7 +349,7 @@ const directory& root() noexcept {
 					relay_read, relay_write, relay_has>>>>,
 			E<identity::numeric,						/// /r/0 .. /r/9
 				N<micurest::accessor::vector<byte,
-					relay_read, relay_write, relay_has>>>>,
+					relay_read, relay_write, relay_has>,media::json>>>,
 		/* directory a	 													*/
 		D<name::a,										/// /a
 			E<name::X,									/// /a/*
@@ -357,7 +357,7 @@ const directory& root() noexcept {
 					analog_read, analog_has>>>>,
 			E<identity::numeric,						/// /a/0 .. /a/9
 				N<micurest::accessor::bunch<int,
-					analog_read, analog_has>>>>,
+					analog_read, analog_has>, media::json>>>,
 		/* directory in	 													*/
 		D<name::in,										/// /in
 			E<name::X,									/// /in/*
@@ -365,7 +365,7 @@ const directory& root() noexcept {
 					interrupt_read, interrupt_has>>>>,
 			E<identity::numeric,						/// /in/0 .. /in/1
 				N<micurest::accessor::bunch<byte,
-					interrupt_read, interrupt_has>>>>,
+					interrupt_read, interrupt_has>, media::json>>>,
 		E<name::X, json_node>,							/// /*
 		F<name::blob,&blob_length, sizeof(blob), blob>,	/// /blob
 		F<name::mode, pointer<enums::mode_t, &mode>>,	/// /mode
@@ -382,19 +382,15 @@ const directory& root() noexcept {
 	>();
 }
 application rest(root());
-using network_arduino::proto::tcp;
 /* instance of a tcp server													*/
-tcp server(80);
+network_arduino::tcp::server server(rest);
 
 void server_listen() noexcept {
-	::server.listen();
+	server.listen(80);
 }
 
 void server_run() noexcept {
-	if( ::server.accept() ) {
-		tcp::connection client(::server);
-		network::proto::http::service(client, rest);
-	}
+	server.run();
 }
 /* Minimal example of 4 entries including 1 html page:
 Program:   21644 bytes (8.3% Full)

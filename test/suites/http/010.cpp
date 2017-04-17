@@ -40,7 +40,7 @@ struct Test010 : Test {
 		application app(root());
 		cleanup();
 		application::result_t res = app.service(in, env.output);
-		return res == expected ? success : bad;
+		return res == expected ? success : (result_t)(bad | (uint8_t)res);
 	}
 	static void cleanup() noexcept;
 	cstring master() const noexcept;
@@ -103,7 +103,7 @@ void Test010::cleanup() noexcept {
 	numeric = 0;
 	logical = false;
 	memset(text,0,sizeof(text));
-	memset(blob,0,sizeof(text));
+	memset(blob,0,sizeof(blob));
 	blob_length = 0;
 }
 

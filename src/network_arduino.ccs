@@ -1,0 +1,40 @@
+/*
+ * Copyright (C) 2017 Eugene Hutorny <eugene@hutorny.in.ua>
+ *
+ * cojson.ccs - cascaded configuration for COJSON
+ *
+ * This file is part of COJSON Library. http://hutorny.in.ua/projects/cojson
+ * This file is part of µcuREST Library. http://hutorny.in.ua/projects/micurest
+ *
+ * The COJSON Library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License v2
+ * as published by the Free Software Foundation;
+ *
+ * The COJSON Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License v2
+ * along with the COJSON Library; if not, see
+ * <http://www.gnu.org/licenses/gpl-2.0.html>.
+ */
+
+#pragma once
+#include "ccs.hpp"
+namespace micurest {
+namespace network_arduino {
+namespace tcp {
+class server;
+}}}
+
+namespace configuration {
+template<typename target, typename build>
+struct Configuration<micurest::network_arduino::tcp::server, target, build> {
+	/* size of buffer for exchanging data with the tcp stack 				*/
+	static constexpr unsigned short buffer_size = 256;
+	/* storage class for the exchange buffer								*/
+	static constexpr bool buffer_storage_is_static = true; 
+};
+
+}

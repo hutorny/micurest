@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>&#x3BC;cuREST Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="&#x3BC;cuREST Demo">
+    <meta name="author" content="">
+    <base href="//r.iot-ware.com/l/">
+	<link rel="stylesheet" href="css/responsive.css">
+	<link rel="stylesheet" href="css/style.css">
+    <link rel="shortcut icon" href="//r.iot-ware.com/d/favicon.ico">
+  </head>
+</head>
+<body>
+<div id="container">
+	<div id="fieldsets">
+	<fieldset class="inline-block">
+		<legend>
+			<label>Data Fields</label>
+		</legend>
+		<div class="main-nav">
+			<ul id="menu-top" class="navigation">
+				<li id="menu-item-rpc" class=""><a href="/rpcc" target="_top">RPC</a></li>
+				<li id="menu-item-demo" class=""><a href="/demo" target="_top">Demo</a></li>
+				<li id="menu-item-none" class=""><span>&nbsp;</span></li>
+				<li id="menu-item-about" class=""><a href="about.html" target="_top" id="about">About</a></li>
+			</ul>
+		</div>				
+		<table>
+			<tr><td style="width:12em">Logical</td><td style="width:16em">
+				<input type="radio" class="bind hidden-input radio-YES" name="logical" id="logical" disabled="disabled">
+				<input type="radio" class="hidden-input radio-NO" name="logical" id="logical_no" checked="checked" disabled="disabled">
+				<label class="radio-YES" for="logical">TRUE</label><label class="radio-NO" for="logical_no">FALSE</label>
+			</td></tr>
+			<tr><td>Natural</td><td>
+				<input id="natural" class="bind w100p" maxlength="10" 
+					pattern="[0-9]+" disabled="disabled"></td></tr>
+			<tr><td>Numeric</td><td>
+				<input id="numeric" class="bind w100p" maxlength="26" 
+					pattern="-?(0|([1-9][0-9]*))(.[0-9]+)?([eE][+-]?[0-9]+)?$" disabled="disabled"></td></tr>
+			<tr><td>Text</td><td>
+				<input id="text" class="bind w100p" maxlength="32" disabled="disabled"></td></tr>
+			<tr><td>Enum</td><td>
+				<select id="mode" class="bind w100p" name="mode" disabled="disabled">
+					<option></option>
+				</select>
+			</td></tr>
+			<tr><td>MAC Address</td><td>
+				<input id="mac"  class="bind w100p"
+					maxlength="17"  placeholder="00:00:00:00:00:00"
+					pattern="((^|:)[0-9A-Fa-f][0-9A-Fa-f]){6}$" disabled="disabled"></td></tr>
+			<tr><td>IP Address</td><td>
+				<input id="ip" class="bind w100p"				
+					pattern="((^|\.)((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))){4}$"
+					placeholder="0.0.0.0" maxlength="15" disabled="disabled"></td></tr>
+			<tr><td>BLOB/Image</td><td>
+				<input type="file" id="blob" accept="image/*" class="bind"></input>
+				<label for="blob" id="upload-label">
+					<img id="blob" class="w100p" src="/blob" alt="Upload">
+				</label>
+			</td></tr>
+		</table>		
+	</fieldset>
+	</div>
+	<div id="messages">
+		<fieldset class="inline-block">
+			<div id="log"><span>Edit any field above and hit enter</span></div>
+		</fieldset>
+	</div>		
+</div>
+</body>
+<script type="text/javascript" src="js/pure.js"></script>
+<script type="text/javascript" src="js/micu.js"></script>
+<script>
+var UI;
+document.mcumodel = null;
+/*
+function _null() { return null; }
+function traverse(obj, path) {
+	return (! path || ! obj || path.length == 0) ? obj :
+		(path.length == 1 ? obj[path[0]] : traverse(obj[path[0]],path.slice(1)));
+}
+function _checked(path) {
+	return function(a) {
+		return traverse(a, path.split('.')) ? true : null; 
+	}
+}
+function _notchecked(path) {
+	return function(a) {
+		return traverse(a, path.split('.')) ? null : true; 
+	}
+}
+*/
+window.onload = function() {
+	UI = new UIDemo();
+
+	UI.directives.bind = {
+		'logical' 	: 'logical',
+		'natural' 	: 'natural',
+		'numeric'	: 'numeric',
+		'mode' 		: 'mode',
+		'text' 		: 'dir/text',
+		'mac' 		: 'mac',
+		'ip' 		: 'ip',
+		'blob'		: 'blob'
+	};
+	UI.targets.mode = '#mode';
+	UI.targets.blob = 'img#blob';
+	UI.directives.meta = { mode : '/meta/mode' };
+	UI.directives.mode = {
+		'option' : {
+			'i<-' : {
+				'.' : 'i',
+				'@value' : 'i'
+			} 
+		}	
+	};	
+
+	UI.init();
+	if( document.mcumodel ) {
+		UI.render(document.mcumodel);
+		delete document.mcumodel;
+	}
+};
+
+function render() {
+	UI.render();
+};
+</script>
+</html>

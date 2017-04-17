@@ -40,8 +40,8 @@ SRC-DIRS :=																	\
 
 
 INCLUDES := 																\
-  ../src																	\
   tools																		\
+  ../src																	\
   suites/include															\
 
 HOST-GOALS := host uchar wchar char16 char32 overflow saturate sprintf
@@ -87,7 +87,7 @@ help:
 	@echo "    $(BOLD)<goal> clean$(NORM)  - cleans working directory"
 	@echo "    $(BOLD)<goal> rebuild$(NORM)- makes a clean rebuild"
 	@echo "    $(BOLD)<goal> metrics$(NORM)- builds code size metrics for the goal,"
-	@echo "                    one of: mega, smart, teensy3, pic32mx, msp430fr, openwrt-mips"
+	@echo "                    one of: mega, smart, teensy3, pic32mx, msp430fr, openwrt-mips, esp8266"
 
 all: $(filter-out all hosts,$(TOP-GOALS))
 	@$(if $(filter-out clean,$(MAKECMDGOALS)),,								\

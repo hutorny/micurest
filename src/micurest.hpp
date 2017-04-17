@@ -18,9 +18,9 @@
  * along with the µcuREST Library; if not, see
  * <http://www.gnu.org/licenses/gpl-2.0.html>.
  */
-#ifndef MICUREST_HPP_
-#define MICUREST_HPP_
-#include <stdint.h>
+#pragma once
+#include <configuration.h>
+#include "micurest.ccs"
 #include "cojson.hpp"
 #include "http_01.hpp"
 #include "coap.hpp"
@@ -41,36 +41,10 @@ using namespace cojson::details;
 using pstr = progmem<char>;
 size_t strlen(pstr p) noexcept;
 size_t strlen(const char* s) noexcept;
+void copy(char* dst, pstr src, size_t n);
 }
 
-/******************************************************************************
- *						configuration-related definitions					  *
- ******************************************************************************/
-
-struct default_config {
-	/** When set to true, response status message is not written,
-	 *  only status code is  */
-	static constexpr bool empty_status_message = false;
-	/** When set to true, POST is handled as sequence of PUT and GET */
-	static constexpr bool handle_post_as_put_get = true;
-	/** When set to true, node gets extra virtual methods: post, del
-	 * for handling HTTP POST and DELETE 							*/
-	static constexpr bool extended_node = false;
-	/** When set to true, requests started with HTTP/0.1
-	 * will fail with error if contain unsupported header.
-	 * in other cases unsupported headers are ignored  				*/
-	static constexpr bool strict_http01 = false;
-
-	/** identity_t data type used for non-statically named resources */
-	typedef uint32_t identity_t;
-	/** sets size of ETag */
-	static constexpr size_t etag_size = 16;
-};
-
-struct config : default_config {
-#	include "micurest.config"
-};
-
+struct config : configuration::Configuration<config> {};
 
 namespace identity {
 	/**
@@ -167,6 +141,8 @@ struct media {
 		anyapp = any + 1,
 		octet_stream,
 		json,
+		json_rpc,
+		jsonrequest,
 		javascript,
 		__count_of
 	};
@@ -260,6 +236,10 @@ struct literal<const char*> : http::literal<const char*> {
 			return media_type::application::octet_stream();
 		case media::json:
 			return media_type::application::json();
+		case media::json_rpc:
+			return media_type::application::json_rpc();
+		case media::jsonrequest:
+			return media_type::application::jsonrequest();
 		case media::javascript:
 			return media_type::application::javascript();
 		case media::css:
@@ -411,6 +391,10 @@ public:
 			return media_type::application::octet_stream();
 		case media::json:
 			return media_type::application::json();
+		case media::json_rpc:
+			return media_type::application::json_rpc();
+		case media::jsonrequest:
+			return media_type::application::jsonrequest();
 		case media::javascript:
 			return media_type::application::javascript();
 		case media::css:
@@ -674,6 +658,10 @@ public:
 		}
 		/* return true if empty */
 		inline bool operator!() const noexcept {
+			return isempty();
+		}
+		/* return true if empty */
+		inline bool isempty() const noexcept {
 			return state == state_t::empty;
 		}
 	};
@@ -821,6 +809,11 @@ protected:
 								 const httpmessage::delimiters& dlm) noexcept {
 		return equals(dlm, chr);
 	}
+	inline bool isdlmcrlf(const httpmessage::delimiters& dlm) noexcept {
+		return (equals(curr,dlm) ||
+			/* special case dlm == lit::LF, accept CRLF as well */
+			(equals(dlm,lit::LF) && curr == lit::CR && get() && curr == lit::LF));
+	}
 	inline void save(state_pdo& dst) const noexcept {
 		message::save(dst);
 		dst.state = state;
@@ -850,6 +843,7 @@ private:
 	media::type read_mediatype() noexcept;
 	inline media::type read_mediatypetext() noexcept;
 	inline media::type read_mediatypeapp() noexcept;
+	inline media::type read_mediatypeappj() noexcept;
 	bool read_length() noexcept {
 		details::lexer in(input);
 		return details::reader<size_t>::read(requ.content_length, in);
@@ -1101,7 +1095,9 @@ public:
 	}
 	virtual void post(details::message& msg) const noexcept {
 		put(msg);
-		if( handle_post_as_put_get && msg.isgood() ) get(msg);
+		if( handle_post_as_put_get )
+			if( msg.isgood() )
+				get(msg);
 	}
 	virtual void del(details::message& msg) const noexcept {
 		msg.error(status_t::Method_Not_Allowed);
@@ -1237,7 +1233,7 @@ public:
 			|| (i < n && msg.req().has(details::header::content_length)) )
 			msg.bad_request();
 		else {
-			putc(++i,0);
+			putc(i,0);
 			msg.status(status_t::No_Content);
 		}
 	}
@@ -1249,8 +1245,8 @@ public:
 		msg.seal();
 
 		ostream& out(msg.obody());
-		const char_t* buff = gets();
-		if( buff ) 
+		cstring buff = gets();
+		if( buff != nullptr )
 			out.puts(buff);
 		else
 			for(size_t i = 0; i < n; ++i) out.put(getc(i));
@@ -1270,7 +1266,7 @@ public:
 	/**
 	 * Returns zero-terminated buffer
 	 */
-	virtual const char_t* gets() const noexcept { return nullptr; }
+	virtual cstring gets() const noexcept { return cstring(nullptr); }
 	/**
 	 * stores one byte to application data
 	 */
@@ -1287,12 +1283,28 @@ public:
 /**
  * json - a generic JSON content provider
  */
+template<cojson::details::item V, media::type M = media::json>
 struct json : node {
 public:
 	media::type mediatype() const noexcept {
-		return media::json;
+		return M;
+	}
+	void get(details::message& msg) const noexcept {
+		msg.status(status_t::OK);
+		V().write(msg.obody());
+	}
+	void put(details::message& msg) const noexcept {
+		if( msg.req().content_type == mediatype() ) {
+			cojson::lexer in(msg.ibody());
+			if( V().read(in) ) {
+				msg.status(status_t::No_Content);
+				return;
+			}
+		}
+		msg.bad_content();
 	}
 };
+
 
 /**
  * octets - a generic octet-stream content provider
@@ -1344,20 +1356,25 @@ public:
  *   if S=OK calls GET, otherwise sets S as the response status
  */
 template<class X>
-struct numeric : json { /* numeric uses JSON lexer/reade/writer  */
+struct numeric : node { /* numeric uses JSON lexer/reade/writer  */
 	using T = typename X::type;
+	media::type mediatype() const noexcept {
+		return media::json;
+	}
 	void put(details::message& msg) const noexcept {
 		if( msg.req().content_type != mediatype() ) {
 			msg.bad_content();
 			return;
 		}
 		details::lexer in(msg.ibody());
-		if( X::canlref && X::has() ) {
-			//TODO coap stream should be limited by field size to prevent
-			//reader<T>::read from reading extra bytes
-			if( ! details::reader<T>::read(X::lref(), in) /* || ! msg.consume_crlf() */ ) {
-				msg.bad_content();
-				return;
+		if( X::canlref ) {
+			if (X::has() ) {
+				//TODO coap stream should be limited by field size to prevent
+				//reader<T>::read from reading extra bytes
+				if( ! details::reader<T>::read(X::lref(), in) /* || ! msg.consume_crlf() */ ) {
+					msg.bad_content();
+					return;
+				}
 			}
 		} else if( X::canset ) {
 			T v;
@@ -1397,7 +1414,7 @@ struct numeric : json { /* numeric uses JSON lexer/reade/writer  */
 /**
  * EntryGenericResource - entry, a generic named resource
  */
-template<name id, details::fnode I>
+template<name id, resource::fnode I>
 inline const entry& EntryGenericResource() noexcept {
 	static const struct local : entry {
 		const node& getnode(const details::message&) const noexcept {
@@ -1414,7 +1431,7 @@ inline const entry& EntryGenericResource() noexcept {
  *  entry, a dynamically allocated or indexed resource
  *  with homogeneous structure for all indexable resources
  */
-template<identity::parser parser, details::fnode I>
+template<identity::parser parser, resource::fnode I>
 inline const entry& EntryIndexedResource() noexcept {
 	static const struct local : entry {
 		const node& getnode(const details::message&) const noexcept {
@@ -1431,7 +1448,7 @@ inline const entry& EntryIndexedResource() noexcept {
  *  entry, a dynamically allocated or indexed resource
  *  with heterogeneous structure for indexable resources
  */
-template<identity::parser parser, details::inode I>
+template<identity::parser parser, resource::inode I>
 inline const entry& EntryDynamicResource() noexcept {
 	static const struct local : entry {
 		const node& getnode(const details::message& msg) const noexcept {
@@ -1450,19 +1467,17 @@ inline const entry& EntryDynamicResource() noexcept {
 template<media::type M, fstring V>
 inline const node& NodeTextFuction() noexcept {
 	static const struct local : details::text {
-		media::type mediatype() const noexcept {
-			return M;
-		}
+		media::type mediatype() const noexcept { return M;	}
 		void put(details::message& msg) const noexcept {
 			msg.error(status_t::Method_Not_Allowed);
 		}
 		size_t length() const noexcept { return details::strlen(V()); }
 		size_t size() const noexcept { return 0; }
-		char_t getc(size_t i) const noexcept { return V()[i]; }
-		const char_t* gets() const noexcept {
-			return std::is_same<cstring,const char_t*>::value ?
-				(const char_t*)V() : nullptr;
+		char_t getc(size_t i) const noexcept {
+			return V()[i];
+			//return static_cast<char_t>(V()[i]);
 		}
+		cstring gets() const noexcept {	return V();	}
 	} l;
 	return l;
 }
@@ -1538,35 +1553,32 @@ inline const node& NodeAction() noexcept {
  */
 template<cojson::details::item V>
 inline const node& NodeJSON() noexcept {
-	static const struct local : details::json {
-		void get(details::message& msg) const noexcept {
-			msg.status(status_t::OK);
-			V().write(msg.obody());
-		}
-		void put(details::message& msg) const noexcept {
-			if( msg.req().content_type == mediatype() ) {
-				cojson::lexer in(msg.ibody());
-				if( V().read(in) ) {
-					msg.status(status_t::No_Content);
-					return;
-				}
-			}
-			msg.bad_content();
-		}
-	} l;
+	static const struct local : details::json<V> {} l;
+	return l;
+}
+
+/**
+ * an r/w JSON object
+ */
+template<cojson::details::item V, media::type M = media::json_rpc>
+inline const node& NodeJSONRpc() noexcept {
+	static const struct local : details::json<V,M> {} l;
 	return l;
 }
 
 /**
  * An indexable node bound to a vector via accessor X
  */
-template<class X>
+template<class X, media::type M>
 inline const node& NodeIndexedVector() noexcept {
 	static_assert(X::is_vector, "X must be a vector or array");
 	using writer = details::writer<typename X::type>;
 	using reader = details::reader<typename X::type>;
 
-	static const struct local : details::json {
+	static const struct local : node {
+		media::type mediatype() const noexcept {
+			return M;
+		}
 		void get(details::message& msg) const noexcept {
 			if( X::has(msg.identity()) ) {
 				if( X::canrref ) {
@@ -1621,13 +1633,13 @@ inline const node& NodeIndexedVector() noexcept {
 }
 
 /** FileAccessor
- * A text/plain file for reading/writing a numeric variable
+ * A json file for reading/writing a numeric variable
  * accessible via accessor X.
  */
 template<name id, class X>
 inline const entry& FileAccessor() noexcept {
 	static const struct local : entry {
-		details::numeric<X> file;
+		const details::numeric<X> file;
 		const node& getnode(const details::message&) const noexcept {
 			return file;
 		}
@@ -1639,13 +1651,13 @@ inline const entry& FileAccessor() noexcept {
 }
 
 /** FileVariable
- * A text/plain file for reading/writing a numeric variable
+ * A json file for reading/writing a numeric variable
  * accessible via pointer
  */
 template<name id, typename T, T* V, status_t S = status_t::No_Content>
 inline const entry& FileVariable() noexcept {
 	static const struct local : entry {
-		details::numeric<cojson::accessor::pointer<T,V>> file;
+		const details::numeric<cojson::accessor::pointer<T,V>> file;
 		const node& getnode(const details::message&) const noexcept {
 			return file;
 		}
@@ -1657,13 +1669,13 @@ inline const entry& FileVariable() noexcept {
 }
 
 /**
- * A text/plain file for reading/writing a numeric variable
+ * A json file for reading/writing a numeric variable
  * accessible via functions get/put
  */
 template<name id, typename T, T (*G)() noexcept, void (*P)(T) noexcept>
 inline const entry& FileFunctions() noexcept {
 	static const struct local : entry {
-		details::numeric<cojson::accessor::functions<T,G,P>> file;
+		const details::numeric<cojson::accessor::functions<T,G,P>> file;
 		const node& getnode(const details::message&) const noexcept {
 			return file;
 		}
@@ -1680,23 +1692,10 @@ inline const entry& FileFunctions() noexcept {
  */
 template<name id, fstring V, media::type M = media::plain>
 inline const entry& FileConstString() noexcept {
-	struct textfile : details::text {
-		cstring str = V();
-		size_t size() const noexcept { return 0; }
-		size_t length() const noexcept {
-			return details::strlen(str);
-		}
-		media::type mediatype() const noexcept {
-			return M;
-		}
-		char_t getc(size_t i) const noexcept {
-			return static_cast<char_t>(str[i]);
-		}
-	};
 	static const struct local : entry {
-		textfile file;
+//		const textfile file;
 		const node& getnode(const details::message& msg) const noexcept {
-			return file;
+			return NodeTextFuction<M,V>();
 		}
 		bool matches(const char_t* str, details::message& msg) const noexcept {
 			return details::match(id(), str);
@@ -1718,7 +1717,7 @@ inline const entry& FileText() noexcept {
 		void putc(size_t i , char_t c) const noexcept { V[i] = c ; }
 	};
 	static const struct local : entry {
-		text file;
+		const text file;
 		const node& getnode(const details::message&) const noexcept {
 			return file;
 		}
@@ -1743,7 +1742,7 @@ inline const entry& FileBinary() noexcept {
 		void putc(size_t i , char_t c) const noexcept { V[i] = c; }
 	};
 	static const struct local : entry {
-		binary file;
+		const binary file;
 		const node& getnode(const details::message&) const noexcept {
 			return file;
 		}
@@ -1811,7 +1810,7 @@ inline const entry& Dir() noexcept {
 /**
  * E - entry, a generic named resource
  */
-template<name id, details::fnode I>
+template<name id, resource::fnode I>
 const resource::entry& E() noexcept {
 	return resource::EntryGenericResource<id,I>();
 }
@@ -1867,11 +1866,20 @@ const resource::node& N() noexcept {
 }
 
 /**
+ * an r/w JSON object with alternate media type
+ */
+template<cojson::details::item V, media::type M>
+const resource::node& N() noexcept {
+	return resource::NodeJSONRpc<V,M>();
+}
+
+
+/**
  * An indexable node bound to a vector via accessor X
  */
-template<class X>
+template<class X, media::type M>
 const resource::node& N() noexcept {
-	return resource::NodeIndexedVector<X>();
+	return resource::NodeIndexedVector<X, M>();
 }
 
 /** F
@@ -1908,9 +1916,9 @@ const resource::entry& F() noexcept {
  * A text/plain file for reading constant strings
  * accessible via function V.
  */
-template<name id, fstring V>
+template<name id, fstring V, media::type M = media::plain>
 const resource::entry& F() noexcept {
-	return resource::FileConstString<id,V>();
+	return resource::FileConstString<id,V,M>();
 }
 
 /**
@@ -2007,6 +2015,7 @@ const resource::directory& Root() noexcept {
 
 
 namespace accessor { //FIXME move to cojson
+using namespace cojson::accessor;
 /**
  * Vector item accessor via getter/setter functions
  */
@@ -2068,7 +2077,6 @@ public:
 		keep	= 3, /* success, advised to keep connection open 	*/
 		close	= 4, /* success, requested to close connection   	*/
 	};
-//	typedef bool result_t; /* indicates if connection should be kept open 	 */
 	static constexpr size_t max_section_size = 32;
 	inline application(const resource::directory& dir,
 			bool keepalive = false) noexcept : root(dir), maykeep(keepalive) {}
@@ -2081,6 +2089,11 @@ public:
 	 *				which then mayt come to micurest application separately	 */
 	result_t service(istream& in, ostream& out,
 			details::httpmessage::state_pdo* pdo = nullptr) const noexcept;
+
+	/** services the client's session 									*/
+	template<class session>			/* network stacks implement this 	*/
+	void service(session&) const noexcept; /* method in their specific manner */
+
 protected:
 	using lit = details::literal<>;
 	/** */
@@ -2098,6 +2111,6 @@ static inline constexpr bool operator!(application::result_t v) noexcept {
 }
 
 using resource::directory;
+typedef uint16_t port_t;
 
 }
-#endif

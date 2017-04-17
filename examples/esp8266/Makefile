@@ -105,6 +105,7 @@ MICUREST-OBJS :=															\
   cojson_libdep.o															\
   chartypetable.o															\
   micurest.o																\
+  miculog_esp.o																\
   network_esp8266.o															\
 
 ESP8266-OBJS :=																\

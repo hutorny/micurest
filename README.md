@@ -18,6 +18,10 @@ integral part and uses many feature, itroduced in cojson.
 serving `GET` requests from browsers, `GET/PUT/POST` requests from JavaScript via
 `XMLHttpRequest` and simple machine-to-machine communications.
 
+### JSON-RPC
+`μcuREST` implements `JSON-RPC 2.0` specification, enabling easy implementation 
+of RPC for MCU applications over HTTP protocol. 
+
 ### Transport Layer
 
 An application, implementing HTTP RESTful services with `μcuREST` needs a 
@@ -46,15 +50,35 @@ the HTTP message size could be limited to size of one MTU (~1460 bytes).
     complexity, taking in average 750 bytes of ROM and 250 bytes of RAM per 
     entry.
 
+### Arduino Library
+
+`μcuREST` library for Arduino is available for downloading on this 
+[`link`](https://raw.githubusercontent.com/hutorny/download/master/Micurest_Arduino.zip)  
+
+### Particle Library
+
+`μcuREST` library for Spark Particle is available for downloading on this 
+[`link`](https://raw.githubusercontent.com/hutorny/download/master/Micurest_Particle.zip)  
+
 ### Tested On
 * **Debian** `i686`, `g++-4.9.2`
 * **Controllino MAXI** `ATmega2560`, `avr-g++-4.8.1`
 * **NodeMCU V3** `ESP8266` `xtensa-lx106-elf-g++-4.8.5`
+* **Particle Photon** `STM32F205RGY6` `arm-none-eabi-g++-4.9.3`
+
+### Prebuilt Demos
+
+Ready for flashing example applications can be downloaded via these links:     
+
+* **Controllino MAXI** [`atmega2560.controllino_maxi.micurest_demo.zip`](https://github.com/hutorny/download/raw/master/atmega2560.controllino_maxi.micurest_demo.zip)
+* **NodeMCU V3**  [`esp8266.nodemcu_v3.micurest_demo.zip`](https://github.com/hutorny/download/raw/master/esp8266.nodemcu_v3.micurest_demo.zip)
+* **Particle Photon** [`stm32f2.photon.micurest_demo.zip`](https://github.com/hutorny/download/raw/master/stm32f2.photon.micurest_demo.zip)
 
 Please visit project's [`home page`](http://hutorny.in.ua/projects/micurest) 
 and [`tutorial`](http://hutorny.in.ua/projects/micurest-tutorial) for more 
 details
 
+-------------------------------------------------------------------------------
 
 ## cojson
  C++ pull-type `JSON` parser/generator for constrained platforms

@@ -19,13 +19,10 @@
  * along with the COJSON Library; if not, see
  * <http://www.gnu.org/licenses/gpl-2.0.html>.
  */
-#ifndef COJSON_FLOAT_HPP_
-#define COJSON_FLOAT_HPP_
+#pragma once
 #include <limits.h>
 #include <math.h>
-#ifndef COJSON_HELPERS_HPP_
-#	include "cojson_helpers.hpp"
-#endif
+#include "cojson_helpers.hpp"
 
 /*
  * Motivation
@@ -294,4 +291,3 @@ bool serialize(double val, S& out, sshort precision = 6) noexcept {
 
 }
 }
-#endif // COJSON_FLOAT_HPP_

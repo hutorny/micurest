@@ -40,7 +40,7 @@ struct Test011 : Test {
 		application app(root());
 		cleanup();
 		application::result_t res = app.service(in, env.output);
-		return res == expected ? success : bad;
+		return res == expected ? success : (result_t)(bad | (uint8_t)res);
 	}
 	static void cleanup() noexcept;
 	cstring master() const noexcept;
@@ -81,7 +81,8 @@ obj obj::instance;
 
 static const directory& root() noexcept {
 	return Root<
-		E<name::obj, N<V<obj::X,obj::S>>>
+		E<name::obj, N<V<obj::X,obj::S>>>,
+		E<name::data, resource::NodeJSONRpc<V<obj::X,obj::S>>>
 	>();
 }
 
@@ -101,14 +102,23 @@ Test011 Test011::tests[] = {
 		"PUT /obj\r\nContent-Type: application/json\r\n\r\n{ \"data\" : 2 }"),
 	RUN("POST /obj",
 		"POST /obj\r\nContent-Type: application/json\r\n\r\n{\"data\":3}"),
+	RUN("POST /data",
+		"POST /data\r\nContent-Type: application/json-rpc\r\n\r\n{\"data\":3}"),
+	RUN("POST /obj w/ Accept",
+		"POST /obj\r\nAccept: text/html,application/json;q=0.8\r\n"
+		"Content-Type: application/json\r\n\r\n{\"data\":4}"),
+	RUN("GET /obj w/ Accept",
+		"GET /data\r\nAccept: application/json-rpc,text/html\r\n\r\n"),
+	RUN("GET /obj w/ Accept",
+		"GET /obj\r\nAccept: application/json,text/html\r\n\r\n"),
 };
 
 #undef _T_
 #define _T_ (1100)
 
 static cstring const Master[countof(Test011::tests)] = {
-	 _P_( 0), _P_( 1), _P_( 2), _P_( 3), //_P_( 4),
-//	 _P_( 5), _P_( 6), _P_( 7), _P_( 8), _P_( 9),
+	 _P_( 0), _P_( 1), _P_( 2), _P_( 3), _P_( 4),
+	 _P_( 5), _P_( 6), _P_( 7) //, _P_( 8), _P_( 9),
 //	 _P_(10), _P_(11), _P_(12), _P_(13), _P_(14),
 };
 

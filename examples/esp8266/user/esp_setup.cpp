@@ -215,7 +215,10 @@ using namespace micurest;
 using micurest::details::message;
 
 template<class C, typename T>
-struct relay_node : micurest::details::json {
+struct relay_node : micurest::resource::node {
+	media::type mediatype() const noexcept {
+		return media::json;
+	}
 	virtual T getswitch() const noexcept = 0;
 	void get(message& msg) const noexcept {
 		msg.status(status_t::OK);

@@ -19,10 +19,12 @@
  * <http://www.gnu.org/licenses/gpl-2.0.html>.
  */
 
-
+#pragma once
+#include <configuration.h>
+#include "network_esp8266.ccs"
 #include <cstddef>
 #include <stdarg.h>
-#include "network.hpp"
+#include "micurest.hpp"
 #include "miculog.hpp"
 extern "C" {
 #include "ets_sys.h"
@@ -33,8 +35,6 @@ extern "C" {
 
 namespace micurest {
 namespace network_esp {
-using namespace micurest::network;
-
 
 using cojson::char_t;
 using cojson::details::noncopyable;
@@ -43,26 +43,18 @@ using cojson::details::ostream;
 using cojson::details::error_t;
 
 /*****************************************************************************/
-namespace proto {
+namespace tcp {
 
-class tcp {
+class server {
 public:
 	static constexpr uint16_t timeout = 60;
 	static constexpr size_t mtu_size = 1400;
-	inline tcp(const application* a) noexcept : app(a) {}
-
-	struct connection {
-		inline connection(tcp& sock) noexcept : socket(sock) {}
-		bool accept() noexcept { return true; }
-	private:
-		tcp& socket;
-	};
+	inline server(const application& a) noexcept : app(a) {}
 
 	bool listen(port_t p) noexcept;
-	virtual void close() noexcept;
-
 
 protected:
+	virtual void close() noexcept;
 	/** espconn callbacks */
 	struct on {
 		static void connect(void *arg) noexcept;
@@ -81,14 +73,15 @@ protected:
 protected:
 	espconn con;
 	esp_tcp tpc;
-	const application* const app;
+	const application& app;
 };
-
-class tlsbase : public tcp {
-public:
-	inline tlsbase(const application* a,
+}
+namespace tls {
+class proto : public tcp::server {
+protected:
+	inline proto(const application& a,
 		const uint8* c, uint16 cl, const uint8* k, uint16 kl) noexcept
-	  : tcp(a), cert(c), cert_len(cl), key(k), key_len(kl) {}
+	  : server(a), cert(c), cert_len(cl), key(k), key_len(kl) {}
 	void send(const char* data, size_t size) noexcept;
 	void receive(const char* data, size_t len) noexcept;
 	bool accept() noexcept;
@@ -102,9 +95,9 @@ private:
 
 
 template<class C>
-class tls : public tlsbase {
+class server : public proto {
 public:
-	inline tls(const application* a) noexcept :
-	tlsbase(a, C::cert, sizeof(C::cert), C::key, sizeof(C::key)) {}
+	inline server(const application& a) noexcept :
+	proto(a, C::cert, sizeof(C::cert), C::key, sizeof(C::key)) {}
 };
 }}}

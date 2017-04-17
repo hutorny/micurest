@@ -120,19 +120,20 @@ COJSON-OBJS :=																\
   common.o 																	\
   cojson.o																	\
   cojson_libdep.o															\
+  cojson_progmem.o															\
+  chartypetable_progmem.o													\
 
 OBJS :=																		\
   $(COJSON-OBJS)															\
   $(ARDUINO-OBJS)															\
   arduino.o 																\
   avrcppfix.o 																\
-  chartypetable_progmem.o													\
 
 megab-OBJS := 																\
   080.o																		\
-  cojson_progmem.o															\
 
 megaa-OBJS := 																\
+  031.o																		\
   032.o																		\
   033.o																		\
   034.o																		\
@@ -148,28 +149,25 @@ mega-OBJS := 																\
   004.o																		\
   004.cpp.o																	\
   005.o																		\
+  006.o																		\
   030.o																		\
-  031.o																		\
 
 megap-OBJS := 																\
-  cojson_progmem.o															\
   $(mega-OBJS)																\
 
 megaq-OBJS := 																\
-  cojson_progmem.o															\
   $(megaa-OBJS)																\
 
 megar-OBJS := 																\
   010.o																		\
   micurest.o																\
-  cojson_progmem.o															\
   micurest_progmem.o														\
 
 mega-DEFS :=																\
-  COJSON_TEST_OMIT_NAMES													\
+  CSTRING_PROGMEM COJSON_TEST_OMIT_NAMES									\
 
 megaa-DEFS :=																\
-  COJSON_TEST_OMIT_NAMES													\
+  CSTRING_PROGMEM COJSON_TEST_OMIT_NAMES									\
 
 megab-DEFS :=																\
   CSTRING_PROGMEM															\

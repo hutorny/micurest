@@ -2,6 +2,7 @@
  *  Copyright (C) 2017 Eugene Hutorny <eugene@hutorny.in.ua>
  *  zero-dependency allocation free mapping of enum values to names
  */
+#pragma once
 namespace enumnames {
 
 typedef const char* (*name)();

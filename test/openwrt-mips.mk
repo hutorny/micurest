@@ -61,7 +61,7 @@ METRIC-OBJS := 																\
 TESTS-BASIC := $(wildcard $(addprefix $(BASE-DIR)/suites/basic/, *.c *.cpp))
 TESTS-BENCH := $(wildcard $(addprefix $(BASE-DIR)/suites/bench/, *.c *.cpp))
 TESTS-HOST  := 100.cpp 101.cpp #compilation fails on 102.cpp
-TESTS-ALL   := $(notdir $(TESTS-BASIC) $(TESTS-BENCH) $(TESTS-HOST))
+TESTS-ALL   := $(sort $(notdir $(TESTS-BASIC) $(TESTS-BENCH) $(TESTS-HOST)))
 
 openwrt-mips-OBJS  := $(patsubst %.c,%.o,$(TESTS-ALL:.cpp=.o))
 openwrt-mips-uchar-OBJS := $(openwrt-mips-OBJS)

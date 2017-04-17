@@ -339,7 +339,7 @@ const directory& root() noexcept {
 		>,
 		D<name::a,
 			E<name::all, N<cojson::V<unsigned, countof(array), array>>>,
-			E<micurest::identity::numeric, N<X>>
+			E<micurest::identity::numeric, N<X, micurest::media::json>>
 		>,
 		F<name::blob,&blob_length, sizeof(blob), blob>,
 		E<name::restart, N<put_restart, 32>>,

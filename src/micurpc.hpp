@@ -19,9 +19,9 @@
  * <http://www.gnu.org/licenses/gpl-2.0.html>.
  */
 
-#ifndef MICURPC_HPP_
-#define MICURPC_HPP_
+#pragma once
 #include "micurest.hpp"
+
 /*
  * RPC call is a POST or PUT method containing a JSON object in its body
  * and expecting a JSON object as a response
@@ -38,31 +38,30 @@
  * - method implementation
  * - call-specific structures for params and result,
  * - with their cojson structures
- * ? static method returning RPC-method name
- * - static factory method
+ * - static method returning RPC-method name
  *
- * A set of RPC procedures is aggregated in an API object
- * which is then must be placed in a µcuREST hierarchy.
+ * A set of RPC procedures (classes) is aggregated with an API class
+ * which is then is placed in a µcuREST resource map for access vis HTTP
  *
- * On an rpc call, the following flow of events occurs:
+ * On an RPC call, the following flow of events occurs:
  * - µcuREST application receives a request
- * - when processing the request URI, an µcuRPC API object found and called
- * - the API object starts parsing JSON body
- * - the JSON body MUST contain member name 'method' that MUST go before the
+ * - when processing the request URI, it finds µcuRPC API resource
+ * - the API resource object calls RPC service for parsing JSON body
+ * - the JSON body MUST contain member name 'method' an it MUST go before the
  *   params
- * - when the API object reads member name params, it lookups the list
- *   of procedures and finds corresponding procedure
- * - API object calls procedure's factory to initialize the procedure object
- * - API object calls procedure's read method to read the parameters
- * - API object finishes reading the request object
- * - API object calls procedure's run method
+ * - when the service reads member name params, it lookups the list
+ *   of procedures and finds procedure corresponding to the method
+ * - service calls factory to initialize the procedure object
+ * - service procedure's read_params method to read the parameters
+ * - service finishes reading the request object
+ * - service calls procedure's run method
  * - the run method executes user code, which is expected to fill
  *   proprietary result structure and, on error the error parameter
- * - API object starts writing response object
- * - when the API object writes member result it calls procedure's write method
- *   to write the result
- * - API object finishes writing response object
- * - µcuREST application finishes writing response
+ * - service starts writing response object
+ * - when it comes to the result property it calls procedure's write_result
+ *   method to write the result
+ * - service finishes writing JSON-RPC response object
+ * - µcuREST application finalizes HTTP response
  *
  * Because the procedure object gets control in three phases, its state
  * has to be saved and kept between phases. Use of static storage for
@@ -73,11 +72,10 @@
  * if params and result are declared static (per procedure) or µcuRPC
  * configured to use shared static storage.
  *
- *
  * Implementation limitations:
- * IL#1. request.id MUST be a string or null
+ * IL#1. only PUT and POST methods a supported
  * IL#2. error.data is not supported
- * IL#3. params by order not recommended
+ * IL#3. method property must precede params propery
  */
 
 namespace micurpc {
@@ -89,9 +87,13 @@ using micurest::resource::node;
 using micurest::details::message;
 using micurest::media;
 
-struct config {
-	static constexpr size_t max_id_length = 32;
+struct default_config {
+	static constexpr size_t max_id_length = 16;
 	static constexpr size_t max_method_length = 32;
+};
+
+struct config : default_config {
+
 };
 
 /****************************************************************************
@@ -118,6 +120,9 @@ enum error_code : short {
 	/** Server error
 		Reserved for implementation-defined server-errors.				*/
 	server_error		= -32000,
+	id_is_too_long		= -32001,
+	method_is_too_long	= -32003,
+	string_is_too_long	= -32004,
 	server_error99		= -32099
 };
 
@@ -143,7 +148,7 @@ struct request {
 };
 
 /**
- * Response object (success)
+ * Response object (both success and error)
  */
 struct response {
 	/** A String specifying the version of the JSON-RPC protocol.
@@ -156,15 +161,15 @@ struct response {
    	 * The value of this member is determined by the method invoked on
    	 * the Server.
 	 */
-	//TODO result
+	//result
 	struct error_t {
 		/**	A Number that indicates the error type that occurred.
 		 *  This MUST be an integer.										*/
-		error_code code;
+		error_code code = error_code::no_errors;
 		/** A String providing a short description of the error.
 		 *  The message SHOULD be limited to a concise single sentence.
 		 */
-		cstring message;
+		cstring message = static_cast<cstring>(nullptr);
 		/* A Primitive or Structured value that contains additional information
 		 * about the error. This may be omitted.
 		 *  The value of this member is defined by the Server
@@ -186,6 +191,7 @@ struct response {
 	  * If there was an error in detecting the id in the Request object
 	  * (e.g. Parse error/Invalid Request), it MUST be Null.				*/
 	const char_t * id;
+	inline response(const char_t * _id) : id{_id} {};
 };
 
 /****************************************************************************
@@ -198,204 +204,286 @@ namespace details {
 	using namespace cojson::details;
 	using namespace micurest::details;
 
-	struct procedure;
-	typedef procedure* (*factory)(void* space);
+template<typename T>
+struct any {
+	inline constexpr any(T a) noexcept : v(a) {}
+	inline constexpr bool of(T a) const noexcept { return v == a; }
+	template<typename ... L>
+	inline constexpr bool of(T a, L ... l) const noexcept {
+		return v == a || of(l ...);
+	}
+private:
+	T v;
+};
 
-	void copy(char* dst, progmem<char> src, size_t n) noexcept;
-	void copy(char* dst, const char* src, size_t n) noexcept;
-	//void copy(char* dst, const char* src, size_t n) noexcept {
-	//	strncpy(dst,src,n);
-	//}
+struct procedure;
+typedef procedure* (*factory)(void* space);
 
+void copy(char* dst, const char* src, size_t n) noexcept;
 
+/** JSON-RPC member names 											*/
+template<typename=cojson::details::char_l>
+struct literal;
 
-	/** JSON-RPC member names 											*/
-	template<typename=cstring>
-	struct literal;
-
-	template<>
-	struct literal<const char*> {
-		static inline constexpr const char* code() noexcept { return "code"; }
-		static inline constexpr const char* error() noexcept { return "error"; }
-		static inline constexpr const char* id() noexcept { return "id"; }
-		static inline constexpr const char* jsonrpc() noexcept { return "jsonrpc"; }
-		static inline constexpr const char* message() noexcept { return "message"; }
-		static inline constexpr const char* method() noexcept { return "method"; }
-		static inline constexpr const char* params() noexcept { return "params"; }
-		static inline constexpr const char* result() noexcept { return "result"; }
-		static inline constexpr const char* _2_0() noexcept { return "2.0"; }
-		//TODO consider moving to micurest::literal or cojson::literal
-		static inline void copy(char* dst, const char * src, size_t n) noexcept{
-			strncpy(dst,src,n);
-		}
-
-		template<size_t N>
-		static inline void copy(char (&dst)[N], const char *src) noexcept {
-			copy(dst,src,N);
-		}
-	};
-	template<>
-	struct literal<progmem<char>> {
-		typedef progmem<char> pgmstr;
-		static inline pgmstr code() noexcept {
-			static constexpr const char s[] __attribute__((progmem)) = "code";
-			return pgmstr(s);
-		}
-		static inline pgmstr error() noexcept {
-			static constexpr const char s[] __attribute__((progmem)) = "error";
-			return pgmstr(s);
-		}
-		static inline pgmstr id() noexcept {
-			static constexpr const char s[] __attribute__((progmem)) = "id";
-			return pgmstr(s);
-		}
-		static inline pgmstr jsonrpc() noexcept {
-			static constexpr const char s[] __attribute__((progmem))= "jsonrpc";
-			return pgmstr(s);
-		}
-		static inline pgmstr message() noexcept {
-			static constexpr const char s[] __attribute__((progmem))= "message";
-			return pgmstr(s);
-		}
-		static inline pgmstr method() noexcept {
-			static constexpr const char s[] __attribute__((progmem)) = "method";
-			return pgmstr(s);
-		}
-		static inline pgmstr params() noexcept {
-			static constexpr const char s[] __attribute__((progmem)) = "params";
-			return pgmstr(s);
-		}
-		static inline pgmstr result() noexcept {
-			static constexpr const char s[] __attribute__((progmem)) = "result";
-			return pgmstr(s);
-		}
-		static inline const pgmstr _2_0() noexcept {
-			static constexpr const char s[] __attribute__((progmem)) = "2.0";
-			return pgmstr(s);
-		};
-
-		template<size_t N>
-		static inline void copy(char (&dst)[N], pgmstr src) noexcept {
-			copy(dst,src,N);
-		}
-
-	};
-
-	template<typename T, typename ... L>
-	struct max_of {
-		static constexpr size_t size =
-			sizeof(T) >= max_of<L...>::size ?
-			sizeof(T)  : max_of<L...>::size;
-		static constexpr size_t align =
-			sizeof(T) >= max_of<L...>::align ?
-			sizeof(T)  : max_of<L...>::align;
-	};
-
-	template<typename T>
-	struct max_of<T> {
-		static constexpr size_t size  = sizeof(T);
-		static constexpr size_t align = alignof(T);
-	};
-
-
-	/**
-	 * string class property via a method
-	 * to workaround problem with accessing properties of the base class
-	 */
-	template<class C, name id, size_t N, char_t* (C::*M)()>
-	const property<C> & PS() noexcept {
-		static const struct local : property<C> {
-			cstring name() const noexcept { return id(); }
-			bool read(C& obj, lexer& in) const noexcept {
-				return reader<char_t*>::read((obj.*M)(), N, in);
-			}
-			bool write(const C& obj, ostream& out) const noexcept {
-				return writer<const char_t*>::write(
-					(const_cast<C&>(obj).*M)(), out);
-			}
-		} l;
-		return l;
+template<>
+struct literal<char> : cojson::details::literal {
+	static inline constexpr const char* code() noexcept { return "code"; }
+	static inline constexpr const char* error() noexcept { return "error"; }
+	static inline constexpr const char* id() noexcept { return "id"; }
+	static inline constexpr const char* jsonrpc() noexcept { return "jsonrpc"; }
+	static inline constexpr const char* message() noexcept { return "message"; }
+	static inline constexpr const char* method() noexcept { return "method"; }
+	static inline constexpr const char* params() noexcept { return "params"; }
+	static inline constexpr const char* result() noexcept { return "result"; }
+	static inline constexpr const char* _2_0() noexcept { return "2.0"; }
+	static inline constexpr const char* id_is_too_long() noexcept {
+		return "Request id is too long";
+	}
+	static inline constexpr const char* method_is_too_long() noexcept {
+		return "Method name is too long";
+	}
+	static inline constexpr const char*string_is_too_long() noexcept {
+		return "String name is too long";
 	}
 
-	/**
-	 * constant string class property via a pointer to member
-	 */
-	template<class C, name id, cstring C::*M>
-	const property<C> & PM() noexcept {
-		static const struct local : property<C> {
-			cstring name() const noexcept { return id(); }
-			bool read(C&, lexer& in) const noexcept {
-				in.error(details::error_t::noobject);
-				return false;
-			}
-			bool write(const C& obj, ostream& out) const noexcept {
-				return writer<cstring>::write(obj.*M, out);
-			}
-		} l;
-		return l;
+	template<size_t N>
+	static inline void copy(char (&dst)[N], const char *src) noexcept {
+		details::copy(dst,src,N);
 	}
+};
 
-	/**
-	 * constant string class property via a pointer to method returning string
-	 * to workaround problem with accessing properties of the base class
-	 */
-	template<class C, name id, const char_t* (C::*M)() const>
-	const property<C> & PG() noexcept {
-		static const struct local : property<C> {
-			cstring name() const noexcept { return id(); }
-			bool read(C&, lexer& in) const noexcept {
-				in.error(details::error_t::noobject);
-				return false;
+#if __AVR__
+#	include "micurpc_progmem.hpp"
+#endif
+
+template<typename T, typename ... L>
+struct max_of {
+	static constexpr size_t size =
+		sizeof(T) >= max_of<L...>::size ?
+		sizeof(T)  : max_of<L...>::size;
+	static constexpr size_t align =
+		alignof(T) >= max_of<L...>::align ?
+		alignof(T)  : max_of<L...>::align;
+};
+
+template<typename T>
+struct max_of<T> {
+	static constexpr size_t size  = sizeof(T);
+	static constexpr size_t align = alignof(T);
+};
+
+
+/**
+ * string class property via a method
+ * to workaround problem with accessing properties of the base class
+ */
+template<class C, name id, size_t N, char_t* (C::*M)()>
+const property<C> & PropertyStringOfParent() noexcept {
+	static const struct local : property<C> {
+		cstring name() const noexcept { return id(); }
+		bool read(C& obj, lexer& in) const noexcept {
+			return reader<char_t*>::read((obj.*M)(), N, in);
+		}
+		bool write(const C& obj, ostream& out) const noexcept {
+			return writer<const char_t*>::write(
+				(const_cast<C&>(obj).*M)(), out);
+		}
+	} l;
+	return l;
+}
+
+/**
+ * constant string class property via a pointer to member
+ */
+template<class C, name id, cstring C::*M>
+const property<C> & PropertyStringMemeber() noexcept {
+	static const struct local : property<C> {
+		cstring name() const noexcept { return id(); }
+		bool read(C&, lexer& in) const noexcept {
+			in.error(details::error_t::noobject);
+			return false;
+		}
+		bool write(const C& obj, ostream& out) const noexcept {
+			return writer<cstring>::write(obj.*M, out);
+		}
+	} l;
+	return l;
+}
+
+/**
+ * constant string class property via a pointer to method returning string
+ * to workaround problem with accessing properties of the base class
+ */
+template<class C, name id, const char_t* (C::*M)() const>
+const property<C> & PropertyStringPointerMethod() noexcept {
+	static const struct local : property<C> {
+		cstring name() const noexcept { return id(); }
+		bool read(C&, lexer& in) const noexcept {
+			in.error(details::error_t::noobject);
+			return false;
+		}
+		bool write(const C& obj, ostream& out) const noexcept {
+			return writer<const char_t*>::write(((obj).*M)(), out);
+		}
+	} l;
+	return l;
+}
+
+template<class C,name id,class T,T& (C::*M)(),const clas<T>& S()>
+const property<C> & PropertyReferenceMethods() noexcept {
+	static const struct local : property<C> {
+		cstring name() const noexcept { return id(); }
+		bool read(C& obj, lexer& in) const noexcept {
+			return S().read((obj.*M)(), in);
+		}
+		bool write(const C& obj, ostream& out) const noexcept {
+			return S().write((const_cast<C&>(obj).*M)(), out);
+		}
+	} l;
+	return l;
+}
+
+template<class C>
+struct bityped_property : property<C> {
+	bool read(C&, lexer&) const noexcept;
+	bool write(const C&, ostream&) const noexcept;
+};
+/**
+ * dual string/integer property via methods
+ * for handling id which could be
+ */
+template<class C, name id>
+const property<C> & PropertyDualStringIntegerRead() noexcept {
+	static const struct local : bityped_property<C> {
+		cstring name() const noexcept { return id(); }
+		bool write(const C&, ostream&) const noexcept { return false; }
+	} l;
+	return l;
+}
+
+/**
+ * dual string/integer property via methods
+ * for handling id which could be
+ */
+template<class C, name id>
+const property<C> & PropertyDualStringIntegerWrite() noexcept {
+	static const struct local : bityped_property<C> {
+		cstring name() const noexcept { return id(); }
+		bool read(C&, lexer&) const noexcept { return false; }
+	} l;
+	return l;
+}
+
+/**
+ * params - a set of class members mapped to json object or json array
+ */
+template<class C>
+struct params : noncopyable {
+	using char_t = cojson::char_t;
+	typedef typename property<C>::node node;
+	params(const node * n, size_t s) noexcept : nodes(n), size(s) { }
+	bool read(C& obj, lexer& in) const noexcept {
+		char_t chr;
+		if( in.skipws(chr) ) {
+			in.back(chr);
+			switch(chr) {
+			case literal<>::begin_object:
+				return collection<indexer>::read(*this, obj, in);
+			case literal<>::begin_array:
+				return collection<>::read(*this, obj, in);
 			}
-			bool write(const C& obj, ostream& out) const noexcept {
-				return writer<const char_t*>::write(((obj).*M)(), out);
-			}
-		} l;
-		return l;
+		}
+		in.error(error_t::bad);
+		return false;
 	}
-
-	template<class C,name id,class T,T& (C::*M)(),const clas<T>& S()>
-	const property<C> & PR() {
-		static const struct local : property<C> {
-			cstring name() const noexcept { return id(); }
-			bool read(C& obj, lexer& in) const noexcept {
-				return S().read((obj.*M)(), in);
-			}
-			bool write(const C& obj, ostream& out) const noexcept {
-				return S().write((const_cast<C&>(obj).*M)(), out);
-			}
-		} l;
-		return l;
+	bool write(const C& obj, ostream& out) const noexcept {
+		/* only reading is needed */
+		return object::null(out);
 	}
+	static inline constexpr bool null(C&) noexcept {
+		return false; /* must not be null */
+	}
+protected:
+	friend class collection<indexer>;
+	friend class collection<iterator>;
+	inline bool read(C& obj, lexer& in, const char_t * name) const noexcept {
+		for(size_t i = 0; i < size; ++i) {
+			const property<C>& m(nodes[i]());
+			if( m.match(name) ) {
+				m.read(obj, in);
+				return true;
+			}
+		}
+		in.error(error_t::mismatch);
+		return false;
+	}
+	/** read array item implementation, returns false when last item read */
+	inline bool read(C& obj, lexer& in, size_t i) const noexcept {
+		if( i < size ) {
+			if( nodes[i]().read(obj, in) )
+				return true;
+			return in.skip(false);
+		} else {
+			in.error(error_t::mismatch);
+			return false;
+		}
+	}
+	const node * nodes;
+	const size_t size;
+};
 
+/** Parameters
+ * JSON object associated with a C++ class
+ */
+template<class C, typename cojson::details::property<C>::node ... L>
+inline const params<C>& Parameters() noexcept {
+	static constexpr typename cojson::details::property<C>::node list[] { L ... } ;
+	static constexpr auto size = sizeof...(L);
+	static const params<C> l(list,size);
+	return l;
+}
+
+class service;
+class procedure;
 /**
  * procedure - an abstract remote procedure
  */
-struct procedure {
-	virtual ~procedure() noexcept {
+class procedure {
+public:
+	template<class P>
+	static inline procedure* factory(void* space) noexcept {
+		static_assert(std::is_base_of<procedure,P>::value,
+				"Template argument is not derived from procedure class");
+		return new (space) P(); /* placement new */
+	}
+protected:
+	virtual ~procedure() noexcept {	}
+	/**
+	 * Called to read parameters from JSON input
+	 */
+	virtual bool read_params(lexer&) noexcept = 0;
+	/**
+	 * Called to write parameters as JSON
+	 */
+	virtual bool write_result(ostream& out) const noexcept {
+		return object::null(out);
 	}
 	/**
-	 * Called to read the parameters
+	 * A template for writing user's result
 	 */
-	virtual bool read(lexer&) noexcept = 0;
+	template<typename T>
+	inline bool write(T& value, ostream& out) const noexcept {
+		return cojson::Write(value, out);
+	}
 	/**
 	 * Executes the user's code.
 	 * On error set error.error to a non-zero value
 	 */
 	virtual void run(response::error_t& error) noexcept = 0;
 	/**
-	 * Called to write the result
-	 */
-	virtual bool write(ostream&) const noexcept = 0;
-	/**
 	 * Factory for constructing a procedure of user's class P
 	 */
-	template<class P>
-	static procedure* factory(void* space) noexcept {
-		static_assert(std::is_base_of<procedure,P>::value,
-				"Template argument is not derived from procedure class");
-		return new (space) P; /* placement new */
-	}
+	inline void* operator new(size_t, void* space) noexcept { return space; }
 	/**
 	 * Disposes factory-allocated procedure
 	 */
@@ -406,59 +494,61 @@ struct procedure {
 	 * Returns name of the RPC method
 	 * Must be replaced in the descendant class
 	 */
-	static cstring method() noexcept;
+	static cstring method() noexcept = delete;
+	friend class service;
+	friend struct writer<procedure*>;
 };
 
 /**
- * Base class for API implementation
+ * Base class for RPC service implementation
  * Provides all methods, not depending on user's procedures
  */
-class api {
+class service {
 protected:
 	/**
 	 * Type containing JSON RPC member names
 	 */
-	using lit = details::literal<cstring>;
+	using lit = literal<>;
+
 	/**
 	 * JSON-RPC request implementation
 	 */
 	struct request : micurpc::request {
 		constexpr inline request() noexcept
-		  : micurpc::request({{0},{0},{0}}), proc(nullptr) {}
+		  : micurpc::request{{0},{0},{0}}, proc(nullptr) {}
 		char_t* _jsonrpc() noexcept { return jsonrpc; }
 		char_t* _method() noexcept { return method; }
-		char_t* _id() noexcept { return id; }
 		procedure* proc;
+		enum class id_is { bad, null, number, string } idtype = id_is::null;
 
 		virtual bool find() noexcept = 0;
 
-		inline bool read(response::error_t& err, istream& body) noexcept {
-			static request::json json; //TODO better static or on stack?
-			lexer in(body);
-			if( ! json.read(*this, in) ) {
-				err.code = error_code::parse_error;
-			} else {
-				//TODO check for overrun and other errors
-				if( ! match(lit::_2_0(), jsonrpc) || method[0] == 0 ) {
-					err.code = error_code::invalid_request;
-				} else
-					return true;
-			}
-			return false;
+		bool read(response::error_t& err, istream& body) noexcept;
+		inline bool readnullid(lexer& in) noexcept {
+			bool success = in.skip(ctype::null);
+			if( success ) idtype = id_is::null;
+			else idtype = id_is::bad;
+			return success;
 		}
-
+		inline bool readstringid(lexer& in) noexcept {
+			bool success =
+				reader<char_t*>::read(id, countof(id), in) && ! +in.error();
+			if( success ) idtype = id_is::string;
+			else idtype = id_is::bad;
+			return success;
+		}
+		bool readintid(lexer& in) noexcept;
 		/**
 		 * cojson structure for JSON-RPC request object
 		 */
 		struct json : clas<request> {
 			static constexpr size_t count = 3;
 			static constexpr typename property<request>::node props[count] {
-				PS<request, lit::jsonrpc,
+				PropertyStringOfParent<request, lit::jsonrpc,
 					countof(&micurpc::request::jsonrpc), &request::_jsonrpc>,
-				PS<request, lit::method,
+				PropertyStringOfParent<request, lit::method,
 					countof(&micurpc::request::method), &request::_method>,
-				PS<request, lit::id,
-					countof(&micurpc::request::id), &request::_id>
+				PropertyDualStringIntegerRead<request, lit::id>
 			};
 			inline json() : clas<request>(props, count) {}
 			bool read(request& req, lexer& in) const noexcept {
@@ -466,11 +556,11 @@ protected:
 			}
 			/* call-back for indexer */
 			inline bool read(request& req, lexer& in,
-							 const char_t * n) const noexcept {
-				if( match(lit::params(), n))
+							 const char_t * name) const noexcept {
+				if( match(lit::params(), name))
 					return params(req, in);
 				else
-					return clas<request>::read(req, in, n);
+					return clas<request>::read(req, in, name);
 			}
 			/**
 			 * JSON-RPC params reader
@@ -482,7 +572,7 @@ protected:
 				if(  req.method[0] == 0 ||  /* no method specified */
 				   !( req.find()) ) /* no method found */
 					return in.skip();
-				req.proc->read(in);
+				req.proc->read_params(in); //TODO fix value ignored
 				return true;
 			}
 		};
@@ -493,19 +583,25 @@ protected:
 	 * JSON-RPC response implementation
 	 */
 	struct response : micurpc::response {
-		inline response(const char* id_) noexcept
-		  : micurpc::response{{},{no_errors,cstring(nullptr)},{id_}},
-			proc(nullptr) {
+		inline response(const char* id_,const request::id_is& _idtype) noexcept
+		  : micurpc::response(id_), proc(nullptr), idtype(_idtype) {
 			lit::copy(jsonrpc, lit::_2_0());
 		  }
+		typedef request::id_is id_is;
 		const char_t* _jsonrpc() const noexcept { return jsonrpc; }
 		const char_t* _id() const noexcept { return id; }
 		error_t& errorm() noexcept { return error; }
 		procedure* proc;
+		const id_is& idtype;
 
-		inline void write(ostream& out) const noexcept {
+		inline bool read(lexer&) noexcept { return false; }
+		inline bool readnullid(lexer&) noexcept { return false; }
+		inline bool readstringid(lexer&) noexcept { return false; }
+		inline bool readintid(lexer&) noexcept { return false; }
+
+		inline bool write(ostream& out) const noexcept {
 			response::json json(error.code==error_code::no_errors);
-			json.write(*this,out);
+			return json.write(*this,out);
 		}
 
 		/**
@@ -515,30 +611,30 @@ protected:
 			static constexpr size_t count = 3;
 			using node = typename property<response>::node;
 			static const clas<response::error_t>& err() noexcept {
-				return O<response::error_t,
-					P<response::error_t, lit::code,
+				return ObjectClass<response::error_t,
+					PropertyScalarAccessor<response::error_t, lit::code,
 						accessor::methods<response::error_t, short,
 						&response::error_t::get, &response::error_t::set>>,
-					PM<response::error_t, lit::message,
+					PropertyConstString<response::error_t, lit::message,
 						&response::error_t::message>
 					>();
 			}
 			static constexpr node fail[count] = {
-				PG<response, lit::jsonrpc, &response::_jsonrpc>,
-				PG<response, lit::id, &response::_id>,
-				PR<response, lit::error,
+				PropertyStringPointerMethod<response, lit::jsonrpc, &response::_jsonrpc>,
+				PropertyDualStringIntegerWrite<response, lit::id>,
+				PropertyReferenceMethods<response, lit::error,
 					response::error_t, &response::errorm, &json::err>
 			};
 			static constexpr node success[count] = {
-				PG<response, lit::jsonrpc, &response::_jsonrpc>,
-				PG<response, lit::id, &response::_id>,
-				P<response, lit::result, procedure*, &response::proc>
+				PropertyStringPointerMethod<response, lit::jsonrpc, &response::_jsonrpc>,
+				PropertyDualStringIntegerWrite<response, lit::id>,
+				PropertyScalarMember<response, lit::result, procedure*, &response::proc>
 			};
 			inline json(bool ok) noexcept
 			  : clas<response>(ok?success:fail,count) {
-				PR<response, lit::error,
+				PropertyReferenceMethods<response, lit::error,
 					response::error_t, &response::errorm, &json::err>();
-				P<response, lit::result,
+				PropertyScalarMember<response, lit::result,
 					decltype(response::proc), &response::proc>();
 			}
 
@@ -548,9 +644,9 @@ protected:
 	/**
 	 * µcuREST node for placing the API among application URI's
 	 */
-	struct rest_node : node {
+	struct rpc_node : node {
 		media::type mediatype() const noexcept {
-			return media::json;
+			return media::json_rpc;
 		}
 		void get(message& msg) const noexcept {
 			/* get is not supported */
@@ -561,38 +657,16 @@ protected:
 			put(msg);
 		}
 
-		static inline void write(message& msg, response& res) noexcept {
-		/* 	http://www.jsonrpc.org/historical/json-rpc-over-http.html
-			3.6.2   Errors													*/
-			switch(res.error.code) {
-			case error_code::no_errors:
-				if( res.id[0] == 0 ) {
-					/* for JSON-RPC Notification requests, a success response
-					 * MUST be an HTTP status code: 204.					*/
-					msg.status(micurest::status_t::No_Content);
-					msg.seal();
-					return;
-				}
-				msg.status(micurest::status_t::OK);
-				break;
-			case error_code::invalid_request:/* 400 -32600 Invalid Request.	*/
-				msg.error(micurest::status_t::Bad_Request);
-				break;
-			case error_code::method_not_found:/*404 -32601 Method not found.*/
-				//msg.not_found() not applicable here
-				msg.error(micurest::status_t::Not_Found);
-				break;
-			case error_code::parse_error:	 /* 500 -32700 	Parse error.	*/
-			case error_code::invalid_params: /* 500 -32602 Invalid params.	*/
-			case error_code::internal_error: /* 500 -32603 Internal error.	*/
-			case error_code::server_error:
-			default:
-				msg.error(micurest::status_t::Internal_Server_Error);
-				break;
-			}
-			res.write(msg.obody());
-		}
 	};
+	static void handle(message& msg,request&) noexcept;
+	static bool handle(istream&,request&,response&) noexcept;
+	static void write(message& msg, response& res) noexcept;
+	static inline void run(procedure* proc, response::error_t& err) noexcept {
+		proc->run(err);
+	}
+	static inline void dispose(procedure* proc) noexcept {
+		procedure::dispose(proc);
+	}
 };
 
 }
@@ -600,62 +674,66 @@ protected:
  * 							µcuRPC Definitions								*
  ****************************************************************************/
 
-using details::procedure;
+using Procedure = details::procedure;
+using details::Parameters;
 using micurest::resource::node;
 
 /**
- * api - Main µcuRPC template
+ * Service - Main µcuRPC template
  * L is a list of classes implementing RPC calls
  * Each class must:
- * - be derived from micurpc::procedure class,
+ * - be derived from micurpc::Procedure class,
  * - implement abstract methods and
  * - have a default constructor
  * - provide method 'method' returning the RPC method's name
  */
 
 template<typename ... L>
-class api : details::api {
+class Service : details::service {
 public:
 	static constexpr size_t space_size = details::max_of<L...>::size;
 	static constexpr size_t space_align = details::max_of<L...>::align;
-	static const node& rest() noexcept {
-		static const rest_node l;
+	static constexpr size_t count = sizeof...(L);
+
+	static const node& rpc() noexcept {
+		static const rpc_node l;
 		return l;
 	}
 	/**
 	 * service method
 	 * For use outside of µcuREST framework
 	 */
+	using ioerr_t = cojson::details::error_t;
 	static inline void service(details::istream& in,
 			details::ostream& out) noexcept {
 		request req;
 		response res(req.id);
-		if( req.read(res.error, in) ) {
-			if( nullptr == (res.proc = req.proc) ) {
-				res.error.code = error_code::internal_error;
-			} else {
-				req.proc->run(res.error);
-			}
-		}
+		if( handle(in, req, res) )
+			run(req.proc, res.error);
 		res.write(out);
 		if( req.proc )
-			procedure::dispose(req.proc);
+			Procedure::dispose(req.proc);
 		return;
-
+	}
+	static inline cstring nameof(size_t i) noexcept {
+		static constexpr name names[] = { L::method ... };
+		return i < count ? names[i]() : cstring(nullptr);
 	}
 private:
-	struct request : details::api::request {
-//		alignas(space_align)
-		char space[space_size]; //TODO configurable static
+	struct request : details::service::request {
+#	if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9 ))
+		// fails with avr-g++ 4.8, compiles with g++ 4.9
+		char space[space_size] alignas(space_align); //TODO configurable static
+#	else
+		char space[space_size] alignas(4); // workaround
+		static_assert(space_align < 4, "space is misaligned");
+#	endif
 
 		bool find() noexcept {
 			//TODO consider matching id within the factory itslef
 			static details::factory list[] =  { L::template factory<L> ... };
-			static constexpr name names[] = { L::method ... };
-			static constexpr size_t  n = sizeof...(L);
-
-			for(size_t i = 0; i < n; ++i)
-				if( details::match(names[i](), method)) {
+			for(size_t i = 0; i < count; ++i)
+				if( details::match(nameof(i), method)) {
 					proc = list[i](space);
 					return true;
 				}
@@ -663,30 +741,36 @@ private:
 		}
 
 	};
-	using details::api::response;
+	using details::service::response;
 
-	struct rest_node : details::api::rest_node {
+	struct rpc_node : details::service::rpc_node {
 		void put(message& msg) const noexcept {
-			if( msg.req().content_type == mediatype() ) {
-				request req;
-				response res(req.id);
-				if( req.read(res.error, msg.ibody()) ) {
-					if( nullptr == (res.proc = req.proc) ) {
-						res.error.code = error_code::internal_error;
-					} else {
-						req.proc->run(res.error);
-					}
-				}
-				write(msg, res);
-				if( req.proc )
-					procedure::dispose(req.proc);
-				return;
-			}
-			msg.bad_content();
+			request req;
+			handle(msg, req);
+			return;
 		}
 
 	};
 };
+
+/** Params::Names::FieldPointers::json
+ *  A shortcut for defining parameters as member pointers
+ */
+template<class Proc, typename ... Type>
+struct Params {
+	using name = cojson::details::name;
+	template<name ... Name>
+	struct Names {
+		template<Type Proc::* ... Pointer>
+		struct FieldPointers {
+			static inline const details::params<Proc>& json() noexcept {
+				return Parameters<Proc,
+					cojson::details::PropertyScalarMember<Proc,Name,Type,Pointer>...>();
+			}
+		};
+	};
+};
+
 
 } //namespace micurpc
 
@@ -696,19 +780,17 @@ namespace details {
  * writer for writing procedure results
  */
 template<>
-struct writer<micurpc::procedure*> {
-	static inline bool write(micurpc::procedure* p, ostream& out) noexcept  {
-		return p ? p->write(out) : object::null(out);
+struct writer<micurpc::Procedure*> {
+	static inline bool write(micurpc::Procedure* p, ostream& out) noexcept  {
+		return p ? p->write_result(out) : object::null(out);
 	}
 };
 template<>
-struct reader<micurpc::procedure*> {
-	static bool read(micurpc::procedure*, lexer& in) noexcept {
+struct reader<micurpc::Procedure*> {
+	static bool read(micurpc::Procedure*, lexer& in) noexcept {
 		in.error(error_t::noobject);
 		return false;
 	}
 };
 
 }}
-
-#endif /* MICURPC_HPP_ */

@@ -1,0 +1,97 @@
+/*
+ * Copyright (C) 2017 Eugene Hutorny <eugene@hutorny.in.ua>
+ *
+ * miculog.ccs - cascaded configuration for miculog
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ *
+ * https://opensource.org/licenses/MIT
+ */
+
+#pragma once
+#include "ccs.hpp"
+
+namespace miculog {
+enum class level : unsigned char {
+	trace,
+	debug,
+	info,
+	warn,
+	error,
+	fail,
+	none
+};
+namespace details {
+/* all log calls end up in this function, implemented by the user	*/
+
+struct default_appender {
+	static void log(level, const char* fmt, ...) noexcept
+										__attribute__ ((format (printf, 2, 3)));
+};
+
+template<typename V, typename T, T...>
+struct enumset;
+
+template<typename V, typename T>
+struct enumset<V, T> {
+	static constexpr const V value = 0;
+};
+
+template<typename V, typename T>
+static constexpr const V shift(int v, T t) noexcept {
+	return static_cast<V>(v) << static_cast<V>(t);
+}
+
+template<typename V, typename T, T t>
+struct enumset<V, T, t> {
+	static constexpr const V value = { shift<V>(1, t) };
+};
+
+template<typename V, typename T, T t, T ... l>
+struct enumset<V, T, t, l...> {
+	static constexpr const V value = {
+		(shift<V>(1, t)) | enumset<V, T, l...>::value };
+};
+
+template<typename V>
+static inline bool constexpr is_set(V v, level t) noexcept {
+	return v & (static_cast<V>(1) << static_cast<V>(t));
+}
+}
+
+template<class C, typename build> 
+struct appender: public details::default_appender {};
+
+template<level t>
+struct From {
+	static constexpr const unsigned char value = {
+		t == level::none ? 0 : details::shift<unsigned char>(-1, t) };
+};
+
+template<level ... list>
+struct Levels: details::enumset<unsigned char, level, list...> {};
+
+template<class C, typename build> 
+struct ClassLogLevels : From<level::error> { };
+
+template<class Class>
+struct ClassLogLevels<Class,configuration::build::Debug> : From<level::debug>{};
+
+
+}

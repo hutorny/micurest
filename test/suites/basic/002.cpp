@@ -56,6 +56,7 @@ struct names<const char*> {
 	}
 };
 
+#if __AVR__
 template<>
 struct names<progmem<char>> {
 	static progmem<char> strname() noexcept {
@@ -72,7 +73,7 @@ struct names<progmem<char>> {
 		return progmem<char>(s);
 	}
 };
-
+#endif
 
 static const value& strings() {
 	return V<str_get>();

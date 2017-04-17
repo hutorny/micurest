@@ -1,0 +1,59 @@
+/*
+ * Copyright (C) 2017 Eugene Hutorny <eugene@hutorny.in.ua>
+ *
+ * micurest.ccs - cascaded configuration for µcuREST
+ *
+ * This file is part of µcuREST Library. http://hutorny.in.ua/projects/micurest
+ *
+ * The µcuREST Library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License v2
+ * as published by the Free Software Foundation;
+ *
+ * The µcuREST Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License v2
+ * along with the µcuREST Library; if not, see
+ * <http://www.gnu.org/licenses/gpl-2.0.html>.
+ */
+
+#pragma once
+#include "ccs.hpp"
+#include <stdint.h>
+namespace micurest {
+/******************************************************************************
+ *						configuration-related definitions					  *
+ ******************************************************************************/
+
+struct default_config {
+	/** When set to true, response status message is not written,
+	 *  only status code is  */
+	static constexpr bool empty_status_message = false;
+	/** When set to true, POST is handled as sequence of PUT and GET */
+	static constexpr bool handle_post_as_put_get = true;
+	/** When set to true, node gets extra virtual methods: post, del
+	 * for handling HTTP POST and DELETE 							*/
+	static constexpr bool extended_node = false;
+	/** When set to true, requests started with HTTP/0.1
+	 * will fail with error if contain unsupported header.
+	 * in other cases unsupported headers are ignored  				*/
+	static constexpr bool strict_http01 = false;
+
+	/** identity_t data type used for non-statically named resources */
+	typedef uint32_t identity_t;
+	/** sets size of ETag */
+	static constexpr uint8_t etag_size = 16;
+};
+
+struct config;
+class application; /* uses log */
+
+}
+
+namespace configuration {
+	template<typename target, typename build>
+	struct Configuration<micurest::config, target, build>
+	  : micurest::default_config {};
+}

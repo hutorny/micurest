@@ -210,12 +210,13 @@ inline bool write_double_impl<config::write_double_impl_is::internal>(
 template<>
 inline bool write_double_impl<config::write_double_impl_is::with_sprintf>(
 		const double& val, ostream& out) noexcept {
-	temporary tmp;
-	if( ! any<char_t>::gfmt(tmp.buffer, tmp.size, val) ) {
+	temporary_s<char, config::sprintf_buffer_size,
+					  config::sprintf_buffer_static> tmp;
+	if( ! any<char>::gfmt(tmp, tmp.size, val) ) {
 		out.error(error_t::overrun);
 		return false;
 	}
-	return out.puts(tmp.buffer);
+	return out.puts((const char*)tmp);
 }
 
 bool writer<double>::write(const double& val, ostream& out) noexcept {

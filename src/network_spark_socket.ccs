@@ -1,0 +1,42 @@
+/*
+ * Copyright (C) 2017 Eugene Hutorny <eugene@hutorny.in.ua>
+ *
+ * micurest.ccs - cascaded configuration for µcuREST
+ *
+ * This file is part of µcuREST Library. http://hutorny.in.ua/projects/micurest
+ *
+ * The µcuREST Library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License v2
+ * as published by the Free Software Foundation;
+ *
+ * The µcuREST Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License v2
+ * along with the µcuREST Library; if not, see
+ * <http://www.gnu.org/licenses/gpl-2.0.html>.
+ */
+
+#pragma once
+#include "ccs.hpp"
+
+namespace micurest {
+namespace network_spark_socket {
+namespace tcp {
+class server; /* uses log */
+}}}
+
+namespace configuration {
+namespace target { struct Photon; }
+/** Configuration for TCP server											*/
+template<typename target, typename build>
+struct Configuration<micurest::network_spark_socket::tcp::server,target,build> {
+	static constexpr short inactivity_timeout = 1000; 
+	static constexpr short max_connections = 4;
+	static constexpr short max_sessions = 2;
+	static constexpr short buffer_size = 512;
+	static constexpr bool  buffer_static = false;/* 512 bytes on stack	*/
+};
+}

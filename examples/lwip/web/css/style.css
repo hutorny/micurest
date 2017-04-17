@@ -166,30 +166,6 @@ input.compact:HOVER, input.compact:FOCUS, input.compact:ACTIVE {
 fieldset {
 	border-radius: 4px;
 	vertical-align: top;
-	padding-bottom: 0.4em;
-	margin: 0 1px 0.4em 1px;	
-}
-
-fieldset:only-child {
-	margin: 0 auto;	
-}
-
-#line-break:before {
-    content: '\A';
-    white-space: pre;
-    margin-left:-2px;
-}
-
-.w2em {
-	width: 2em;
-}
-
-.w4em {
-	width: 4em;
-}
-
-.w8em {
-	width: 8em;
 }
 
 .w12em {
@@ -198,9 +174,6 @@ fieldset:only-child {
 
 .w16em {
 	width: 16em;
-}
-.w50 {
-	width: 50%;
 }
 
 input.w100p {
@@ -218,79 +191,16 @@ input.w100p {
 .inline-block {
 	display: inline-block;
 }
-button#rtc-set {
-	float: right;
-    padding: 0 0.2em;
-}
 
-#controllino-fieldsets,
 #messages,
 #fieldsets {
 	text-align: center;
 }
 
-#controllino-fieldsets {
-	display: flex;
-}
-#controllino-fieldsets > div {
-	display: flex;
-	margin: 0 auto;
-}
-#controllino-fieldsets .analog-value {
-    text-align: right !important;
-    min-width: 1.5em;
-}
-.navigation {
-    position: absolute;
-  		top: 1em;
-}
-.navigation, .navigation ul {
-  		display: block;
-  		list-style-type: none;
-  		margin: 0;
-}
-.navigation li {
-  		float: left;
-  		margin: 0;
-  		padding: 0;
-  		position: relative;		
-}
-.mini-panel td {
-    height: 2.2em;
-}		
-button.group-action {
-	width: 8em;
-	height: 2em;
-	position: relative;
-}
-table.mini-panel td {
-	vertical-align: middle;
-	padding: 0.4em 0.2em 0.4em 0.2em;
-	width: 2em;
-} 
-
-table.mini-panel tr td:nth-child(2),
-table.mini-panel tr td:nth-child(3) {
-	width: 1em;
-}
-
-table.mini-panel tr td:first-child {
-	text-align: right;
-}
-table.mini-panel tr td:nth-child(2) {
-	text-align: left;
-}
-table.mini-panel tr td:nth-child(3) {
-	text-align: right;
-}
-table.mini-panel tr td:last-child {
-	text-align: left;
-}
-
 #messages .inline-block,
 #fieldsets .inline-block {
 	margin: 0 auto;
-	}
+}
 
 input[type="file"] {
   		display: none !important;
@@ -298,16 +208,8 @@ input[type="file"] {
 input[type="file"]:invalid ~ label {
   	opacity: 0.3;
 }
-#controllino-fieldsets,
 #fieldsets {
 	padding-top: 4em;
-}
-
-#controllino-fieldsets th,
-#controllino-fieldsets td,
-#controllino-fieldsets tr,
-#controllino-fieldsets table {
-	border: none;
 }		
 #messages {
 	padding-top: 0.5em;			
@@ -326,9 +228,24 @@ input[type="file"]:invalid ~ label {
 	font-size: 125% !important;
 }
 
-#controllino-fieldsets legend label,
-#fieldsets legend label {
+#fieldsets label {
 	padding: 1px;
+}
+
+.navigation {
+    position: absolute;
+  		top: 1em;
+}
+.navigation, .navigation ul {
+  		display: block;
+  		list-style-type: none;
+  		margin: 0;
+}
+.navigation li {
+  		float: left;
+  		margin: 0;
+  		padding: 0;
+  		position: relative;		
 }
 
 tr.dlm > td {
@@ -511,6 +428,7 @@ input[name="menu-visibility"]:checked + span.drop-down-menu label {
 	display: block;
 }  
 
+
 .action-button {
 	background: linear-gradient(to top, #CFCFCF 25%, #DDDDDD 50%, #EBEBEB 50%, #F2F2F2) repeat scroll 0 0 #EBEBEB; 
 	border: 1px groove #707070;
@@ -535,139 +453,56 @@ input[name="menu-visibility"]:checked + span.drop-down-menu label {
 }
 
 
+
 button {
-	border-radius: 4px 4px 4px 4px;	
+	background: linear-gradient(to top, #CFCFCF 25%, #DDDDDD 50%, #EBEBEB 50%, #F2F2F2) repeat scroll 0 0 #EBEBEB; 
+	border: 1px groove #707070;
+	border-radius: 4px 4px 4px 4px;
 	overflow: hidden;
 	text-align: center;
-	background: -o-linear-gradient(to top, #CFCFCF 25%, #DDDDDD 50%, #EBEBEB 50%, #F2F2F2) repeat scroll 0 0 #EBEBEB;
-	background: linear-gradient(to top, #CFCFCF 25%, #DDDDDD 50%, #EBEBEB 50%, #F2F2F2) repeat scroll 0 0 #EBEBEB;
+	text-shadow: 1 1 #F2F2F2;
+	min-height: 1.6em;
 }
-.button {
-	background: -o-linear-gradient(to top, #CFCFCF 25%, #DDDDDD 50%, #EBEBEB 50%, #F2F2F2) repeat scroll 0 0 #EBEBEB;	
-	background: linear-gradient(to top, #CFCFCF 25%, #DDDDDD 50%, #EBEBEB 50%, #F2F2F2) repeat scroll 0 0 #EBEBEB;	
-}
-*/
+
 /* Opera not respecting vertical align for buttons inside h2 if min-height is set */
 x:-o-prefocus, h2 button {
 	padding-top: 0.3em;
 }	
 
-input:checked ~ label.button {
-	background: -o-linear-gradient(to right bottom, #CFCFCF 25%, #DDDDDD 50%, #EBEBEB 50%, #F2F2F2) repeat scroll 0 0 #EBEBEB !important;
-	background: linear-gradient(to right bottom, #CFCFCF 25%, #DDDDDD 50%, #EBEBEB 50%, #F2F2F2) repeat scroll 0 0 #EBEBEB !important;
-	border-style: inset; 	    
+
+button:hover {
+	background: linear-gradient(to top, rgba(207, 207, 207, .9) 25%, rgba(221,221,221,.9) 50%, rgba(235,235,235,.9) 50%, rgba(242,242,242,.9)) repeat scroll 0 0 #661800; 
+	border: 1px groove #661800;
 }
 
-td.bit-state input:checked ~ label.button:after {
-	content: "❶";
-} 
-td.bit-state input:not(:checked) ~ label.button:after {
-	content: "⭕"
-} 
-
-input:checked ~ label.led:after {
-	color: #0D0;	
-}
-input ~ label.led:after {
-	content: "●";
-	color: #555;
-	font-size: 2em;	
+button:active {
+	background: linear-gradient(to top, rgba(207, 207, 207, .9) 15%, rgba(221,221,221,.9) 40%, rgba(235,235,235,.9) 40%, rgba(242,242,242,.9)) repeat scroll 0 0 #661800;
+	box-shadow: 0 1px 0 #330C00 inset;
+/*	font-size-adjust: .5; */ 		
 }
 
-.button:hover {
-  	color: #661800;	
+.action-button:hover {
+/*	background: linear-gradient(to top, rgba(#CF, #CF, #CF, .5) 25%, rgba(#DD, #DD, #DD, .5) 50%, rgba(#EB, #EB, #EB, .5) 50%, rgba(#F2,#F2,#F2,.5)) repeat scroll 0 0 #661800; */ 
+	background: linear-gradient(to top, rgba(207, 207, 207, .9) 25%, rgba(221,221,221,.9) 50%, rgba(235,235,235,.9) 50%, rgba(242,242,242,.9)) repeat scroll 0 0 #661800; 
+	border: 1px groove #661800;
 }
 
-#port-bits td {
-	text-align: center;
-} 
-
-#port-bits th {
-	padding-bottom: 0;
-	padding-top: 0;
+.action-button:active {
+	background: linear-gradient(to top, rgba(207, 207, 207, .9) 15%, rgba(221,221,221,.9) 40%, rgba(235,235,235,.9) 40%, rgba(242,242,242,.9)) repeat scroll 0 0 #661800;
+	box-shadow: 0 1px 0 #330C00 inset;
+	font-size-adjust: .5; 	
 }
 
-fieldset#gpio-data,
-fieldset#gpio-config {
-	width: 45%;
-	display: inline-flex;
-}
 
-td.bit-num,
-td.bit-pad,
-td.bit-state,
-td.bit-mode {
-	padding: 0;
-}
-
-.gpio td.bit-state {
-	text-align: center;
-}
-
-td.gpio-num {
-	text-align: right;	
-}
-
-.w1em8 {
-	max-width: 1.8em;
-    min-width: 1.8em;
-    width: 1.8em;
-}
-
-td.gpio-mode {
-	padding-top: 0;		
-	padding-bottom: 0;
-	vertical-align: middle;		
-}
-td.bit-action {
-	padding: 0;
-	vertical-align: middle;	
-}
-
-td.gpio-data .button,
-td.bit-state .button,
-td.bit-mode .button {
-    border-radius: 50%;
-    overflow: hidden;
-    text-overflow: clip;
-    white-space: nowrap;
-	vertical-align: middle;
-	box-sizing: border-box;
-	text-align: center;
-	
-    max-width: 1.8em;
-    max-height: 1.8em;
-    min-width: 1.8em;
-    min-height: 1.8em;
-    font-size: 1em;
-    line-height: 1.6em !important;
-	font-weight: 500 !important;
-  	padding: 0;
-	background: -o-linear-gradient(to left top, #CFCFCF 25%, #DDDDDD 50%, #EBEBEB 50%, #F2F2F2) repeat scroll 0 0 #EBEBEB !important;	  		
-	background: linear-gradient(to left top, #CFCFCF 25%, #DDDDDD 50%, #EBEBEB 50%, #F2F2F2) repeat scroll 0 0 #EBEBEB !important;	  		
-}
-
-td.bit-mode  button,
-td.bit-state  button {
-	min-height: 1.8em;
-}
-input:not(:enabled) ~ label.button {
-	color: #999;
-	border-style: outset;
+.action-button[disabled="true"] {
+	background: linear-gradient(to top, #CFCFCF 25%, #DDDDDD 50%, #EBEBEB 50%, #F2F2F2) repeat scroll 0 0 #EBEBEB; 	
 	box-shadow: none;
+	color: rgba(0,0,0,0.3);
+	text-shadow: 1 1 #F2F2F2;
+	font-size-adjust: none;
+	border: 1px groove #707070;
 }
-td.bit-state input:checked ~ label.button:after {
-	content: "❶";
-} 
-td.bit-state input:not(:checked) ~ label.button:after {
-	content: "⭕"
-} 
-td.bit-mode input:checked ~ label.button:after {
-	content: "✔";
-} 
-td.bit-mode input:not(:checked) ~ label.button:after {
-	content: "‐"
-} 
+
 
 .error {
 	color: red;
@@ -818,16 +653,15 @@ legend label {
   cursor : pointer;
 }
 
-label#legend-sntp,
 label#legend-sta,
 label#legend-ap {
-	width: 4em;
+	width: 9em;
 }
 
-label.checkbox,
 label.radio-NO,
 label.radio-YES {
 	border: 1px solid #ddd;
+	width: 4em;
 	text-align: center;
     background-image: linear-gradient(bottom , #AAA, #EEE);
     background-image: -moz-linear-gradient(bottom , #AAA, #EEE);
@@ -840,13 +674,10 @@ label.radio-YES {
 }
 label.radio-YES {
 	border-radius: 4px 0 0 4px;
-	width: 4em;
 }
 label.radio-NO {
 	border-radius: 0 4px 4px 0;
-	width: 4em;
 }
-input.checkbox:checked ~ label.checkbox,
 input.radio-YES:checked ~ label.radio-YES {
 	color: white;
     background-image: linear-gradient(top , #005F00, #009F00) !important;
@@ -871,83 +702,32 @@ input.radio-NO:checked ~ label.radio-NO {
     border-top: 	#3F0000;
 } 
 
-.autoupdate {
-	min-width: 1.2em;
-	max-width: 1.2em;
-	width: 1.2em;
-}
-.autoupdate > label {
-    transform: rotate(-90deg);
-    display: inline-block;
-    transform-origin: 100% 0%;
-    position: relative;
-	left: -8.5em;
-	top: 0.1em;
-	padding: 2px 8px;
-	border-radius: 4px;
-	cursor : pointer;	    
-	width: 7em;
-}
-
-#copyright {
-	text-align: center;
-	font-size: 80%;
-	color: #330C00;
-	opacity: 0.6;
-    position: absolute;
-    left: calc(50% - 141px);
-}
-
-#copyright #copyright-email:before {
-	content: 'eugene';
-}
-
-#copyright #copyright-email:after {
-	content: 'hutorny.in.ua';
-}
-
 @media screen and (min-width: 931px) {
 	#fieldsets {
 		display: flex;
 	}
-	fieldset legend .tab {
+	fieldset legend #legend-dlm,
+	fieldset#ap legend label#legend-sta,
+	fieldset#sta legend label#legend-ap {
 		display: none;	
-	}
-	div#sta-sntp, div#ap- {
-    	width: 50%;
 	}
 }
 
 @media screen and (max-width: 930px) {
-	fieldset legend .default {
-		display: none;	
-	}
-	#tab-sta:not(:checked) ~ #tab-sntp:not(:checked) ~ div#sta-sntp,
-	#tab-ap:not(:checked) ~ div#ap-,
-	#tab-sntp:not(:checked) ~ * fieldset#sntp,
-	#tab-ap:not(:checked) ~ * fieldset#ap,
-	#tab-sta:not(:checked) ~ * fieldset#sta {
+	#tab-ap:checked ~ fieldset#sta,
+	#tab-sta:checked ~ fieldset#ap {
 		display: none;
 	}
-	#tab-sntp:checked ~ * legend label#legend-sntp,
-	#tab-ap:checked ~ * legend label#legend-ap,
-	#tab-sta:checked ~ * legend label#legend-sta {
-		background-color: #330C00;
-		color: white;
-	}
-	fieldset legend .tab {
-		padding-left: 0.2em !important;
-		border-radius: 4px;
+	#tab-ap:checked ~ fieldset#ap legend label#legend-sta,
+	#tab-sta:checked ~ fieldset#sta legend label#legend-ap {
+		font-weight: normal;
 	}
 	fieldset legend #legend-dlm {
 		display: inline-block;
-	}
-	fieldset#sta, fieldset#ap { 
-	    min-height: 38em;
-	}
+	}		
 }
 
-@media screen and (max-width: 900px) {
+@media screen and (max-width: 800px) {
 	body {
 		font-size: 0.8em;
 	}
@@ -980,18 +760,16 @@ input.radio-NO:checked ~ label.radio-NO {
 	#menu-item-none {
 		display: none;
 	}
-	label.tab {
+	label#legend-sta,
+	label#legend-ap {
 	   	font-size: 75%;	
 	}
 	#container {
 		padding: 0 4px;
-	}
-	#line-break {
-		display: none;
 	}	
 }
 
-@media screen and (max-width: 830px) {
+@media screen and (max-width: 680px) {
 	#menu-item-none > span {
 		line-height: 25px !important;
 	}
@@ -1001,6 +779,9 @@ input.radio-NO:checked ~ label.radio-NO {
     	line-height: 25px;
     	font-size: 1em;
     	width: 4em;
+	}
+	button {
+	   	font-size: 60%;	
 	}
 	.action-button {
 	    max-width: 4em;

@@ -20,88 +20,14 @@
  * <http://www.gnu.org/licenses/gpl-2.0.html>.
  */
 
-#ifndef COJSON_HPP_
-#define COJSON_HPP_
-#ifndef COJSON_HELPERS_HPP_
-#	include "cojson_helpers.hpp"
-#endif
-#pragma GCC diagnostic ignored "-Wattributes"
+#pragma once
+#include <configuration.h>
+#include "cojson.ccs"
+#include "cojson_helpers.hpp"
 
 namespace cojson {
-	/**
-	 * Default cojson configuration
-	 */
-	struct default_config {
-		/** character type: char, wchar_t or char16_t						*/
-		typedef char char_t;
 
-		/** controls where the constant strings are retrieved from */
-		static constexpr enum class cstring_is {
-			const_char, /** default, as provided by compiler  				*/
-			avr_progmem	/** from the program memory.
-			Note! This option for AVR only, all strings are expected to be
-			properly placed in progmem with __attribute__((progmem))		*/
-		} cstring = cstring_is::const_char;
-
-		/** controls behavior on integral overflow 							*/
-		static constexpr enum class overflow_is {
-			ignored, 	/** overflow condition is silently ignored			*/
-			error, 		/** overflow causes an error						*/
-			saturated	/**	numbers are saturated on overflow				*/
-		} overflow = overflow_is::ignored;
-
-		/** controls implementation of iostate::error						*/
-		static constexpr enum class iostate_is {
-			_notvirtual,/** iostate::error is implemented as non-virtual	*/
-			_virtual,	/** iostate::error is implemented as virtual		*/
-		} iostate = (sizeof(double) == sizeof(float)) ?
-				iostate_is::_notvirtual : iostate_is::_virtual;
-
-		/** controls behavior on read encountered element mismatching
-		 *	targed data type												*/
-		static constexpr enum class mismatch_is {
-			skipped,
-			error
-		} mismatch = mismatch_is::skipped;
-
-		/** controls default null handling.
-		 *  could be overridden in a custom accessor						*/
-		static constexpr enum class null_is {
-			skipped, 	/** overflow condition is silently ignored			*/
-			error, 		/** overflow causes an error						*/
-		} null = null_is::skipped;
-
-		/** controls implementation of temporary buffer, used for reading
-		 * 	names and writing floating data types							*/
-		static constexpr enum class temporary_is {
-			_static,	/**	temporary buffer preallocated in static data	*/
-			_automatic	/**	temporary buffer allocated on the stack 		*/
-		} temporary = (sizeof(double) < 8) ?
-		 /* by default temporary buffer is static on low end CPU (AVR 8 bit).
-		  * sizeof(double) is used as indication of lowendness				*/
-			temporary_is::_static : temporary_is::_automatic;
-
-		/** controls size of temporary buffer								*/
-		static constexpr unsigned temporary_size = 24; /* double should fit */
-
-		static constexpr enum class write_double_impl_is {
-			internal,
-			with_sprintf,
-			external
-		} write_double_impl = write_double_impl_is::internal;
-		using write_double_integral_type = uint32_t;
-		static constexpr unsigned write_double_precision = 6;
-	private:
-		default_config();
-	};
-
-
-	struct config : default_config {
-	/************************************************************************/
-	/* configuration is externalized for the purpose of separate versioning	*/
-#		include <cojson.config>
-	/************************************************************************/
-	public:
+	struct config : configuration::Configuration<config> {
 		static constexpr bool null_is_error = null == null_is::error;
 	private:
 		config();
@@ -547,7 +473,7 @@ static inline constexpr unsigned char operator+(error_t v) noexcept {
 	return static_cast<unsigned char>(v);
 }
 
-template<config::iostate_is V = config::iostate>
+template<config::iostate_is V>
 class iostate_t;
 
 /**
@@ -582,7 +508,7 @@ private:
 /**
  * iostate selector per configuration
  */
-struct iostate : iostate_t<> {
+struct iostate : iostate_t<configuration::Configuration<config>::iostate> {
 	static constexpr char_t eos_c = -1; /* end of stream character */
 	static constexpr char_t err_c = -2; /* i/o error character */
 	inline bool isgood() const noexcept {
@@ -642,26 +568,24 @@ inline bool ostream::puts<char_t*>(char_t* v) noexcept {
 	return puts(const_cast<const char_t*>(v));
 }
 
-template<size_t N, config::temporary_is = config::temporary>
+template<typename T, size_t N, bool Static>
 struct temporary_s {
 	static constexpr size_t size = N;
-	inline operator char_t*() noexcept { return buffer; }
-	inline operator const char_t*() const noexcept { return buffer; }
-	char_t buffer[N];
+	typedef T type[N];
+	inline operator type&() noexcept { return buffer; }
+	T buffer[N] = {};
 };
 
-template<size_t N>
-struct temporary_s<N, config::temporary_is::_static> {
+template<typename T, size_t N>
+struct temporary_s<T, N, true> {
 	static constexpr size_t size = N;
-	inline operator char_t*() noexcept { return buffer; }
-	inline operator const char_t*() const noexcept { return buffer; }
-	static char_t buffer[N];
+	typedef T type[N];
+	inline operator type&() noexcept {
+		static T buffer[N] = {};
+		return buffer;
+	}
 };
 
-template<size_t N>
-char_t temporary_s<N,config::temporary_is::_static>::buffer[N];
-
-struct temporary : temporary_s<config::temporary_size> {};
 
 enum class ctype : int {
 	unknown		= 0,
@@ -844,10 +768,14 @@ private:
 	static inline constexpr bool is_valid(int ct) noexcept {
 		return cojson::details::isvalid(static_cast<ctype>(ct));
 	}
-
+	static inline bool readable(const istream & in) noexcept;
+	static constexpr bool mismatch_is_error =
+		configuration::Configuration<lexer>::mismatch ==
+				config::mismatch_is::error;
 private:
+	using cfg = configuration::Configuration<lexer>;
 	istream& stream;
-	temporary name;
+	temporary_s<char_t, cfg::temporary_size, cfg::temporary_static> name;
 	char_t hold;
 };
 
@@ -1007,7 +935,7 @@ bool write_number(T val, bool negative, T divider, ostream& out) noexcept {
 /******************************************************************************/
 /* JSON writers																  */
 
-template<typename T, bool isgood=detectors::has_write<T,ostream&>::value>
+template<typename T, bool isgood=detectors::has_write<const T&,ostream&>::value>
 struct writer;
 
 template<typename T>
@@ -1024,7 +952,7 @@ struct writer<T, false> {
 		static_assert(std::is_integral<T>::value,
 			"Default writer implementation supports integral types only");
 		typedef numeric_helper<T> H;
-		typedef typename H::U U;;
+		typedef typename H::U U;
 		return write_number<U>(H::abs(val),H::is_negative(val), H::pot, out);
 	}
 };
@@ -1377,9 +1305,12 @@ template<class X>
 struct scalar : value {
 	typedef typename X::type T;
 	bool read(lexer& in) const noexcept {
-		if( X::canlref && X::has() ) {
-			return reader<T>::read(X::lref(), in);
-		} else if( X::canset ) {
+		if( X::canlref ) {
+			if ( X::has() ) {
+				return reader<T>::read(X::lref(), in);
+			}
+		}
+		if( X::canset ) {
 			T v;
 			X::init(v);
 			if( reader<T>::read(v, in) ) {
@@ -1445,7 +1376,7 @@ private:
 /**
  * Read-only vector of strings, accessible via function F
  */
-template<const char_t* (*F)(size_t) noexcept>
+template<const char* (*F)(size_t) noexcept>
 struct strings : value {
 	bool read(lexer& in) const noexcept {
 		in.error(error_t::noobject);
@@ -1453,9 +1384,28 @@ struct strings : value {
 	}
 	bool write(ostream& out) const noexcept {
 		size_t i = 0;
-		const char_t* v = F(0);
-		while( array::dlm(i==0, out) && v &&
-			writer<const char_t*>::write(v, out) && (v=F(++i)));
+		const char* v = F(0);
+		while( array::dlm(i==0, out) && (v != nullptr) &&
+			writer<const char*>::write(v, out) && ((v=F(++i))!= nullptr));
+		return array::end(out);
+	}
+};
+
+
+/**
+ * Read-only vector of strings, accessible via function F
+ */
+template<cstring (*F)(size_t) noexcept>
+struct cstrings : value {
+	bool read(lexer& in) const noexcept {
+		in.error(error_t::noobject);
+		return false;
+	}
+	bool write(ostream& out) const noexcept {
+		size_t i = 0;
+		cstring v = F(0);
+		while( array::dlm(i==0, out) && (v != nullptr) &&
+			writer<cstring>::write(v, out) && ((v=F(++i))!= nullptr));
 		return array::end(out);
 	}
 };
@@ -1469,9 +1419,12 @@ struct propertyx : property<typename X::clas> {
 	typedef typename X::type T;
 	typedef typename X::clas C;
 	bool read(C& obj, lexer& in) const noexcept {
-		if( X::canlref && X::has() ) {
-			return reader<T>::read(X::lref(obj), in);
-		} else if( X::canset ) {
+		if( X::canlref ) {
+			if( X::has() ) {
+				return reader<T>::read(X::lref(obj), in);
+			}
+		}
+		if( X::canset ) {
 			T v;
 			X::init(v);
 			if( reader<T>::read(v, in) ) {
@@ -1563,12 +1516,13 @@ struct values : values_selector<X,X::is_vector> {};
 template<class X, const clas<typename X::clas>& (*S)() noexcept>
 struct objectval : value {
 	bool read(lexer& in) const noexcept {
-		if( X::canlref && X::has() ) {
-			return S().read(X::lref(), in);
-		} else {
-			in.error(error_t::noobject);
-			return in.skip();
+		if( X::canlref ) {
+			if ( X::has() ) {
+				return S().read(X::lref(), in);
+			}
 		}
+		in.error(error_t::noobject);
+		return in.skip();
 	}
 	bool write(ostream& out) const noexcept {
 		if( X::canrref && X::has() ) {
@@ -1664,16 +1618,18 @@ inline const details::property<C> & PropertyScalarAccessor() noexcept {
 /**
  * read-only string class property
  */
-template<class C, details::name id, const char_t* C::*M>
+template<class C, details::name id, cstring C::*M>
 inline const details::property<C> & PropertyConstString() noexcept {
 	static const struct local : details::property<C> {
 		cstring name() const noexcept { return id(); }
-		bool read(C& obj, details::lexer& in) const noexcept {
+		bool read(C&, details::lexer& in) const noexcept {
 			in.error(details::error_t::noobject);
 			return false;
 		}
 		bool write(const C& obj, details::ostream& out) const noexcept {
-			return details::writer<const char_t*>::write(obj.*M, out);
+			return obj.*M != nullptr ?
+				details::writer<cstring>::write(obj.*M, out) :
+				object::null(out);
 		}
 	} l;
 	return l;
@@ -1721,7 +1677,9 @@ const details::property<C> & PropertyString() noexcept {
 			return details::reader<char_t*>::read(obj.*M, N, in);
 		}
 		bool write(const C& obj, details::ostream& out) const noexcept {
-			return details::writer<const char_t*>::write(obj.*M, out);
+			return obj.*M ?
+				details::writer<const char_t*>::write(obj.*M, out) :
+				object::null(out);
 		}
 	} l;
 	return l;
@@ -1750,7 +1708,10 @@ inline const details::property<C>& PropertyStrings() {
 		/** write item item */
 		inline bool write(const C& obj, details::ostream& out,
 				size_t i) const noexcept {
-			details::writer<const char_t*>::write((obj.*M)[i], out);
+			if( (obj.*M)[i] )
+				details::writer<const char_t*>::write((obj.*M)[i], out);
+			else
+				object::null(out);
 			return i < N-1;
 		}
 	} l;
@@ -1830,6 +1791,30 @@ inline const details::clas<C>& ObjectClass() noexcept {
 	static const details::clas<C> l(list,size);
 	return l;
 }
+
+
+/** ObjectJson
+ * A shortcut for defining JSON structure for a class
+ * with all properties being class members
+ *
+ * Usage:
+ *   ObjectJson<MyClass,     bool,         int>::
+ *   PropertyNames<    name::foo,     name::bar>::
+ *   FieldPointers<&MyClass::foo, &MyClass::bar>::json().read(myObj, input);
+ */
+template<class Class, typename ... Type>
+struct ObjectJson {
+	template<details::name ... Name>
+	struct PropertyNames {
+		template<Type Class::* ... Pointer>
+		struct FieldPointers {
+			static const details::clas<Class>& json() noexcept {
+				return ObjectClass<Class,
+					PropertyScalarMember<Class,Name,Type,Pointer>...>();
+			}
+		};
+	};
+};
 
 /** ValueObject
  * JSON object
@@ -2319,6 +2304,56 @@ const details::member& M() noexcept {
 	return details::MemberPointerFunction<id,T,F>();
 }
 
+/**
+ * Writes a JSON value of compatible type:
+ * - numeric
+ * - bool
+ * - const char*
+ * - classes with methods read(lexer&) and write(ostream&)
+ */
+template<typename T>
+inline bool Write(const T& value, details::ostream& out) noexcept {
+	static_assert(std::is_class<T>::value ==
+		detectors::has_write<T,details::ostream&>::value,
+		"Class is missing public: bool write(ostream&) const; method");
+	typedef typename std::remove_const<T>::type T_noconst;
+	typedef typename std::remove_reference<T_noconst>::type V;
+
+	return cojson::details::writer<V>::write(value, out);
+}
+
+/**
+ * Reads from lexer a JSON value of compatible type:
+ * - numeric
+ * - bool
+ * - const char*
+ * - classes with methods read(lexer&) and write(ostream&)
+ */
+template<typename T>
+inline bool Read(T& value, details::lexer& in) noexcept {
+	static_assert(
+		std::is_class<T>::value == detectors::has_read<T,lexer&>::value,
+		"Class is missing public: bool read(lexer&); method");
+	typedef typename std::remove_const<T>::type T_noconst;
+	typedef typename std::remove_reference<T_noconst>::type V;
+
+	return cojson::details::reader<V>::read(value, in);
+}
+
+/**
+ * Reads from lexer a JSON value of compatible type:
+ * - numeric
+ * - bool
+ * - const char*
+ * - classes with methods read(lexer&) and write(ostream&)
+ */
+template<typename T>
+inline bool Read(T& value, details::istream& in) noexcept {
+	lexer lex(in);
+	return Read(value, lex);
+}
+
+
 namespace details {
 /****************************************************************************
  *						Interface Implementations      						*
@@ -2410,4 +2445,3 @@ private:
 };
 
 }} /* namespace cojson */
-#endif /* COJSON_HPP_ */

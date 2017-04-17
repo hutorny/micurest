@@ -365,25 +365,26 @@ static_assert(sizeof(meta_json) + html_size + 44 < mtu_size,
 		"Data size exceeds MTU pay load");
 
 using micurest::identity::numeric;
+using micurest::media;
 
 const entry& esp_config_gpio() noexcept {
 	return
 		D<name::gpio,
 			E<name::asterisk, N<espconfig::allgpio::A>>,/// /config/gpio/*
-			E<numeric, N<espconfig::gpio::X>>			/// /config/gpio/0 ..15
+			E<numeric, N<espconfig::gpio::X, media::json>> /// /config/gpio/0 ..15
 		>();
 }
 
 const entry& esp_config_port()  noexcept {
 	return
 		D<name::port,
-			E<numeric, N<espconfig::port::X>>
+			E<numeric, N<espconfig::port::X, media::json>>
 		>();
 }
 const entry& esp_config_pad()  noexcept {
 	return
 		D<name::pad,
-			E<numeric, N<espconfig::pad::X>>
+			E<numeric, N<espconfig::pad::X, media::json>>
 		>();
 }
 
@@ -414,7 +415,7 @@ const entry& esp_gpio_entry() noexcept {
 	return
 		E<numeric,											/// /gpio/0..15
 			N<vector<io::bit_t, espgpio::gpio_get, espgpio::gpio_set,
-				espconfig::gpio::has>>
+				espconfig::gpio::has>, media::json>
 		>();
 }
 
@@ -423,7 +424,7 @@ const entry& esp_pad_entry() noexcept {
 		D<name::pad,
 			E<numeric,										/// /pad/<N>
 				N<vector<io::bit_t, espgpio::pad_get,
-					espgpio::pad_set, espconfig::pad::has>>
+					espgpio::pad_set, espconfig::pad::has>, media::json>
 			>
 		>();
 }
@@ -433,7 +434,7 @@ const entry& esp_port_entry() noexcept {
 		D<name::port,
 			E<numeric,										/// /port/0
 				N<vector<uint32, espgpio::port_get,
-					espgpio::port_set, espconfig::port::has>>
+					espgpio::port_set, espconfig::port::has>, media::json>
 			>
 		>();
 }

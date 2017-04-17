@@ -35,8 +35,7 @@
  * request-target = absolute-paths
  * status-line = HTTP-version SP status-code SP reason-phrase CRLF
  */
-#ifndef HTTP_01_HPP_
-#define HTTP_01_HPP_
+#pragma once
 namespace http_01 {
 /**
  * Response Status Codes, subset of HTTP/1.1 status codes
@@ -165,6 +164,12 @@ struct literal<const char*> {
 			static inline constexpr const char* json() noexcept {
 				return "json";
 			}
+			static inline constexpr const char* json_rpc() noexcept {
+				return "json-rpc";
+			}
+			static inline constexpr const char* jsonrequest() noexcept {
+				return "jsonrequest";
+			}
 			static inline constexpr const char* javascript() noexcept {
 				return "javascript";
 			}
@@ -278,10 +283,18 @@ public:
 		struct application {
 		private:
 			static constexpr const char _json[]	= "json";
+			static constexpr const char _json_rpc[]	= "json-rpc";
+			static constexpr const char _jsonrequest[]	= "jsonrequest";
 			static constexpr const char _javascript[] = "javascript";
 			static constexpr const char _octet_stream[] = "octet-stream";
 		public:
 			static inline constexpr pstr json() noexcept { return pstr(_json); }
+			static inline constexpr pstr json_rpc() noexcept {
+				return pstr(_json_rpc);
+			}
+			static inline constexpr pstr jsonrequest() noexcept {
+				return pstr(_jsonrequest);
+			}
 			static inline constexpr pstr javascript () noexcept {
 				return pstr(_javascript);
 			}
@@ -309,4 +322,3 @@ public:
 	};
 };
 }
-#endif

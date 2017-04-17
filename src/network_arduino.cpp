@@ -19,9 +19,31 @@
  * <http://www.gnu.org/licenses/gpl-2.0.html>.
  */
 
+#include "access_log.hpp"
 #include "network_arduino.hpp"
 
 namespace micurest {
+namespace network {
+	typedef byte pbyte[4];
+	template<>
+	inline void access_log::_log<pbyte>(const char* lbl, const pbyte& addr,
+														char dlm) noexcept {
+	info("%s %d.%d.%d.%d %c", lbl, addr[0], addr[1], addr[2], addr[3], dlm);
+}
+}
+template<>
+void application::service<network_arduino::tcp::server::session>(
+		network_arduino::tcp::server::session& con) const noexcept {
+	typedef application::result_t result_t;
+	istream& in(con.input());
+	ostream& out(con.output());
+	result_t res = service(in, out);
+	if( res == result_t::keep )
+		con.keep();
+	else
+		con.close();
+}
+
 namespace network_arduino {
 /******************************************************************************/
 
@@ -45,21 +67,24 @@ private:
 
 //static array<endpoint, httpmessage::state_pdo, MAX_SOCK_NUM> httpstate = {};
 
+static const network::access_log access;
+static const miculog::Log<tcp::server> log;
+
 /******************************************************************************/
-namespace proto {
+namespace tcp {
 
-char tcp::connection::buffer::data[];
-
-inline bool tcp::listen(handle_t handle, port_t port) noexcept {
+inline bool server::listen(handle_t handle, port_t port) noexcept {
 	if ( ::socket(handle, SnMR::TCP, port, 0) ) {
 		if( ::listen(handle) ) return true;
 		::close(handle);
 	}
+	log.error("listen port %d error\n", port);
 	return false;
 }
 
 
-bool tcp::listen() noexcept {
+bool server::listen(port_t p) noexcept {
+	port = p;
 	uint_fast8_t res = 0;
 	for (uint8_t handle = 0; handle < MAX_SOCK_NUM; ++handle) {
 		if( ::socketStatus(handle) == SnSR::CLOSED ) {
@@ -69,7 +94,15 @@ bool tcp::listen() noexcept {
 	return res != 0;
 }
 
-void tcp::stop() noexcept {
+void server::run() noexcept {
+	if( accept() ) {
+		session client(*this);
+		app.service(client);
+	}
+}
+
+
+void server::stop() noexcept {
 	for (uint_fast8_t handle = 0; handle < MAX_SOCK_NUM; ++handle) {
 		if( ::socketStatus(handle) != SnSR::CLOSED ) {
 			::close(handle);
@@ -77,7 +110,7 @@ void tcp::stop() noexcept {
 	}
 }
 
-bool tcp::accept() noexcept {
+bool server::accept() noexcept {
 	accepted = badhandle;
 	uint_fast8_t i;
 	handle_t handle = 0;
@@ -111,30 +144,35 @@ bool tcp::accept() noexcept {
 	return accepted != badhandle;
 }
 
-tcp::connection::connection(const tcp& socket) noexcept
+server::session::session(const server& socket) noexcept
   : handle(socket.accepted), buff(*this) {
-//	byte ip[4];
-//	W5100.readSnDIPR(handle,ip);
-//	port_t port = W5100.readSnDPORT(handle);
-//	TODO access.log
+	if( access.enabled() ) {
+		W5100.readSnDIPR(handle,remote_ip);
+		access.log("accepted", remote_ip);
+	}
 }
 
-size_t tcp::connection::available() const noexcept {
+size_t server::session::available() const noexcept {
 	return ::recvAvailable(handle);
 }
 
-size_t tcp::connection::receive(void* data, size_t size) const noexcept {
-//	access.log(__func__, *c.con.proto.tcp, " [%u]\n", size);
-	return ::recv(handle, (uint8_t*) data, size);
+size_t server::session::receive(void* data, size_t size) const noexcept {
+	access.log(__func__, remote_ip, " [%u]\n", size);
+	int16_t res = ::recv(handle, (uint8_t*) data, size);
+	log.warn_if(res<0, "%s error\n", __func__);
+	return res;
 }
 
 
-size_t tcp::connection::send(const void* data, size_t size) const noexcept {
-//	access.log(__func__, *c.con.proto.tcp, " [%u]\n", size);
-	return ::send(handle, (uint8_t*) data, size);
+size_t server::session::send(const void* data, size_t size) const noexcept {
+	access.log(__func__, remote_ip, " [%u]\n", size);
+	size_t res = ::send(handle, (uint8_t*) data, size);
+	log.warn_if(!res, "%s error\n", __func__);
+    return res;
 }
 
-void tcp::connection::close() noexcept {
+void server::session::close() noexcept {
+	access.log(__func__, remote_ip);
 	buff.flush();
 	size_t remain;
 	size_t limit =  1500 / sizeof(buff.data);
@@ -146,7 +184,7 @@ void tcp::connection::close() noexcept {
 	//TODO associate time stamp with current handle to close forcibly if not closed willingly
 }
 
-bool tcp::connection::buffer::get(char_t& val) noexcept {
+bool server::session::buffer::get(char_t& val) noexcept {
 	if( getpos >= endpos ) {
 		size_t chunk = conn.available();
 		if( chunk )
@@ -168,41 +206,19 @@ bool tcp::connection::buffer::get(char_t& val) noexcept {
 	return true;
 }
 
-bool tcp::connection::buffer::put(char_t val) noexcept {
+bool server::session::buffer::put(char_t val) noexcept {
 	if( putpos >= data+size && ! flush() ) return false;
 	*putpos++ = val;
 	return true;
 }
 
-bool tcp::connection::buffer::flush() noexcept {
+bool server::session::buffer::flush() noexcept {
 	bool res = true;
 	if( putpos != data ) {
 		res = conn.send(data, putpos-data) == static_cast<size_t>(putpos-data);
 		putpos = data;
 	}
 	return res;
-}
-
-
-}}
-
-namespace network{
-namespace proto {
-using cojson::details::istream;
-using cojson::details::ostream;
-
-template<>
-void http::service<network_arduino::proto::tcp::connection>(
-		network_arduino::proto::tcp::connection& con,
-		const application& app) noexcept {
-	typedef application::result_t result_t;
-	istream& in(con.input());
-	ostream& out(con.output());
-	result_t res = app.service(in, out);
-	if( res == result_t::keep )
-		con.keep();
-	else
-		con.close();
 }
 
 }}}

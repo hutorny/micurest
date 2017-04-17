@@ -226,30 +226,20 @@ const directory& https_root() noexcept {
 }
 
 /* micurest applications													*/
-application http_app (http_root());
-application https_app(https_root());
-using network_esp::proto::tcp;
-typedef network_esp::proto::tls<tls_cert> tls;
+static application http_app (http_root());
+static application https_app(https_root());
+typedef network_esp::tls::server<tls_cert> tlsserv;
 
-/* micurest server															*/
-server<
-	bind<tcp,  80, network::proto::http,  &http_app>,
-	bind<tls, 443, network::proto::http,  &https_app>> srvr;
+static tcp::server server(http_app);
+static tlsserv secure(https_app);
 
 
 /* server initialization
  * server.run is not needed because the transport layer is event-driven
  */
 extern "C" void user_server() {
-	srvr.listen();
-}
-
-/* logger implementation													*/
-namespace miculog {
-	void log_impl::vmsg(level lvl, const char *fmt, va_list args) noexcept  {
-		//TODO log prefix goes here
-		ets_vprintf(ets_putc, fmt, args);
-	}
+	server.listen(80);
+	secure.listen(443);
 }
 
 void dbg(const char *fmt, ...) noexcept  {

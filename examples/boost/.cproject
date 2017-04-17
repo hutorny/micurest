@@ -62,8 +62,11 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="cdt.managedbuild.config.gnu.cross.exe.debug.584845588.950936712" name="miculog_esp.cpp" rcbsApplicability="disable" resourcePath="micurest/miculog_esp.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cross.cpp.compiler.494618619.1969330481">
+						<tool id="cdt.managedbuild.tool.gnu.cross.cpp.compiler.494618619.1969330481" name="Cross G++ Compiler" superClass="cdt.managedbuild.tool.gnu.cross.cpp.compiler.494618619"/>
+					</fileInfo>
 					<sourceEntries>
-						<entry excluding="micurest/network_arduino.cpp|micurest/micurest_progmem.cpp|micurest/cojson_progmem.cpp|micurest/chartypetable.cpp|micurest/network_esp8266.cpp|micurest/chartypetable_progmem.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="micurest/miculog_esp.cpp|micurest/miculog_arduino.cpp|micurest/network_lwip.cpp|tutorial.cpp|micurest/network_arduino.cpp|micurest/micurest_progmem.cpp|micurest/cojson_progmem.cpp|micurest/chartypetable.cpp|micurest/network_esp8266.cpp|micurest/chartypetable_progmem.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -134,5 +137,12 @@
 		</scannerConfigBuildInfo>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
-	<storageModule moduleId="refreshScope"/>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Release">
+			<resource resourceType="PROJECT" workspacePath="/boost.host"/>
+		</configuration>
+		<configuration configurationName="Debug">
+			<resource resourceType="PROJECT" workspacePath="/boost.host"/>
+		</configuration>
+	</storageModule>
 </cproject>

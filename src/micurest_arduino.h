@@ -19,14 +19,9 @@
  * <http://www.gnu.org/licenses/gpl-2.0.html>.
  */
 
-#ifndef MICUREST_ARDUINO_H_
-#define MICUREST_ARDUINO_H_
-#ifndef	NETWORK_ARDUINO_HPP_
-#	include "network_arduino.hpp"
-#endif
-#ifndef COJSON_HELPERS_HPP_
-#	include "cojson_helpers.hpp"
-#endif
+#pragma once
+#include "network_arduino.hpp"
+#include "cojson_helpers.hpp"
 
 namespace micurest {
 using cojson::details::progmem;
@@ -41,7 +36,3 @@ using cojson::details::progmem;
 	static const char l[] __attribute__((progmem)) = #s; 			\
 	return progmem<char>(l); }
 #define ENUM(s) constexpr const char* s() noexcept {return #s;}
-
-
-
-#endif /* USER_UTILS_HPP_ */

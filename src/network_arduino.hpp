@@ -18,8 +18,9 @@
  * along with the COJSON Library; if not, see
  * <http://www.gnu.org/licenses/gpl-2.0.html>.
  */
-#ifndef NETWORK_ARDUINO_HPP_
-#define	NETWORK_ARDUINO_HPP_
+#pragma once
+#include <configuration.h>
+#include "network_arduino.ccs"
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
 #include <utility/socket.h>
@@ -29,9 +30,7 @@
 #undef abs
 #undef max
 #undef min
-#ifndef NETWORK_HPP_
-#	include "network.hpp"
-#endif
+#include "micurest.hpp"
 
 namespace micurest {
 namespace network_arduino {
@@ -41,19 +40,21 @@ using cojson::details::ostream;
 using cojson::details::istream;
 
 /*****************************************************************************/
-namespace proto {
+namespace tcp {
 
-class tcp {
+class server {
 public:
+	using config = configuration::Configuration<server>;
 	static constexpr handle_t badhandle = -1;
-	inline tcp(port_t aport) noexcept
-	  : port(aport), next(0), accepted(badhandle) {}
-	struct connection /*: network::connection*/ {
+	static constexpr auto buffer_static = config::buffer_storage_is_static;
+	inline server(const application& ap) noexcept
+	  : app(ap), port(0), next(0), accepted(badhandle) {}
+	struct session /*: network::connection*/ {
 		void close() noexcept;
 		void keep() noexcept {}
 		inline istream& input() noexcept { return buff; }
 		inline ostream& output() noexcept { return buff; }
-		connection(const tcp& socket) noexcept;
+		session(const server& socket) noexcept;
 	private:
 		size_t send(const void*, size_t) const noexcept;
 		size_t receive(void*, size_t) const noexcept;
@@ -62,29 +63,32 @@ public:
 			bool get(char_t& val) noexcept;
 			bool put(char_t val) noexcept;
 			bool flush() noexcept;
-			static constexpr size_t size = 256; //TODO configurable
-			inline buffer(const connection& con) noexcept
+			static constexpr size_t size = config::buffer_size;
+			inline buffer(const session& con) noexcept
 				: conn(con), getpos(data), endpos(data), putpos(data) { }
-			const connection& conn;
+			const session& conn;
 			const char * getpos;
 			const char * endpos;
 			char * putpos;
-			static char data[size]; //TODO configurable static
+			cojson::details::temporary_s<char,
+				config::buffer_size, buffer_static> data;
 		};
 		const handle_t handle;
 		buffer buff;
+		byte remote_ip[4];
 		friend class buffer;
 	};
-	bool accept() noexcept;
-	bool listen() noexcept;
+	bool listen(port_t) noexcept;
 	void stop() noexcept;
+	void run() noexcept;
+protected:
+	bool accept() noexcept;
 private:
 	static bool listen(handle_t, port_t) noexcept;
-
+	const application& app;
 	port_t port;
 	uint_fast8_t next;
 	handle_t accepted;
-	friend class tcp::connection;
+	friend class server::session;
 };
 }}}
-#endif

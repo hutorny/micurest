@@ -132,7 +132,10 @@ struct datetime {
 /* this template illustrates how to implement micurest API with
  * complex objects  														*/
 template<class C>
-struct object : micurest::details::json {
+struct object : node {
+	micurest::media::type mediatype() const noexcept {
+		return micurest::media::json;
+	}
 	void get(message& msg) const noexcept {
 		msg.status(status_t::OK);
 		C obj = {};

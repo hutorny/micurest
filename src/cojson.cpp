@@ -31,11 +31,10 @@ namespace details {
  */
 static inline bool ashex(char16_t v, ostream& out) noexcept {
 	/* rfc7159##section-7 allows only 4HEXDIG char codes */
-	unsigned char n = sizeof(v)*8 - 4;
-	while(n != 0 ) {
+	unsigned char n = 4*4;
+	while(n-=4) {
 		char16_t c = (v >> n) & (char16_t)0xF;
 		if( ! out.put(ashex(c)) ) return false;
-		n -= 4;
 	}
 	return true;
 } /* avr: 106 bytes */
@@ -238,8 +237,9 @@ private:
 	uint_fast8_t count;
 }; /* avr: 20 bytes */
 
+
 bool lexer::skip(bool list) noexcept {
-if( config::config::mismatch != config::config::mismatch_is::error ) {
+if( not mismatch_is_error ) {
 	bstack stack;
 	char_t chr;
 	ctype ct;
@@ -315,9 +315,9 @@ if( config::config::mismatch != config::config::mismatch_is::error ) {
 } /* avr: 102 bytes */
 
 bool lexer::skip_string(bool first) noexcept {
-	if( config::config::mismatch == config::config::mismatch_is::error )
+	if( mismatch_is_error ) {
 		return false;
-	else {
+	} else {
 		char_t chr;
 		while( string(chr, first) == ctype::string ) { first = false; }
 		return chr == 0;
@@ -330,10 +330,9 @@ bool lexer::skip_member(bool first) noexcept {
 		skip_string(first) && skipws(chr) && chr == literal::name_separator;
 }
 
-static inline bool readable(const istream & in) noexcept {
+inline bool lexer::readable(const istream & in) noexcept {
 	return error_t::noerror == (in.error() &
-	  ((config::mismatch == config::mismatch_is::error) ?
-		error_t::blocked : error_t::failed));
+			(mismatch_is_error ? error_t::blocked : error_t::failed));
 }
 
 ctype lexer::get(char_t& chr) noexcept {

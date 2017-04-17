@@ -48,6 +48,8 @@ constexpr const char _::media_type::_application_[] __attribute__((progmem));
 constexpr const char _::media_type::_text_		 [] __attribute__((progmem));
 
 constexpr const char _::media_type::application::_json		  [] __attribute__((progmem));
+constexpr const char _::media_type::application::_json_rpc	  [] __attribute__((progmem));
+constexpr const char _::media_type::application::_jsonrequest [] __attribute__((progmem));
 constexpr const char _::media_type::application::_javascript  [] __attribute__((progmem));
 constexpr const char _::media_type::application::_octet_stream[] __attribute__((progmem));
 

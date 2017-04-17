@@ -18,6 +18,7 @@
  * along with the µcuREST Library; if not, see
  * <http://www.gnu.org/licenses/gpl-2.0.html>.
  */
+#pragma once
 
 namespace coap_10 {
 /*
@@ -126,5 +127,3 @@ namespace coap_10 {
 	};
 
 }
-
-

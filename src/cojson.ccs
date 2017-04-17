@@ -1,0 +1,111 @@
+/*
+ * Copyright (C) 2017 Eugene Hutorny <eugene@hutorny.in.ua>
+ *
+ * cojson.ccs - cascaded configuration for COJSON
+ *
+ * This file is part of COJSON Library. http://hutorny.in.ua/projects/cojson
+ * This file is part of µcuREST Library. http://hutorny.in.ua/projects/micurest
+ *
+ * The COJSON Library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License v2
+ * as published by the Free Software Foundation;
+ *
+ * The COJSON Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License v2
+ * along with the COJSON Library; if not, see
+ * <http://www.gnu.org/licenses/gpl-2.0.html>.
+ */
+
+#pragma once
+#include "ccs.hpp"
+#include <stdint.h>
+
+namespace cojson {
+namespace details {
+	struct lexer;
+}
+struct config;
+/**
+ * Default cojson configuration
+ */
+struct default_config {
+	/** character type: char, wchar_t or char16_t						*/
+	typedef char char_t;
+
+	/** controls where the constant strings are retrieved from */
+	static constexpr enum class cstring_is {
+		const_char, /** default, as provided by compiler  				*/
+		avr_progmem	/** from the program memory.
+		Note! This option for AVR only, all strings are expected to be
+		properly placed in progmem with __attribute__((progmem))		*/
+	} cstring = 
+#		if __AVR__	
+			cstring_is::avr_progmem;
+#		else
+			cstring_is::const_char;
+#		endif	
+
+	/** controls behavior on integral overflow 							*/
+	static constexpr enum class overflow_is {
+		ignored, 	/** overflow condition is silently ignored			*/
+		error, 		/** overflow causes an error						*/
+		saturated	/**	numbers are saturated on overflow				*/
+	} overflow = overflow_is::ignored;
+
+	/** controls implementation of iostate::error						*/
+	static constexpr enum class iostate_is {
+		_notvirtual,/** iostate::error is implemented as non-virtual	*/
+		_virtual,	/** iostate::error is implemented as virtual		*/
+	} iostate = iostate_is::_notvirtual; /* iostate_is::_virtual;		*/
+
+	/** controls behavior on read encountered element mismatching
+	 *	targed data type												*/
+	enum class mismatch_is {
+		skipped,
+		error
+	};
+
+	/** controls default null handling.
+	 *  could be overridden in a custom accessor						*/
+	static constexpr enum class null_is {
+		skipped, 	/** null is skipped									*/
+		error, 		/** null causes an error							*/
+	} null = null_is::skipped;
+
+	static constexpr bool sprintf_buffer_static = false; 
+	static constexpr unsigned sprintf_buffer_size = 24; /* double should fit */
+	
+	static constexpr enum class write_double_impl_is {
+		internal,
+		with_sprintf,
+		external
+	} write_double_impl = write_double_impl_is::internal;
+	using write_double_integral_type = uint32_t;
+	static constexpr unsigned write_double_precision = 6;
+private:
+	default_config();
+};
+}
+
+namespace configuration {
+	template<typename target, typename build>
+	struct Configuration<cojson::config, target, build> 
+	  : cojson::default_config {};
+	
+	template<typename target, typename build>
+	struct Configuration<cojson::details::lexer, target, build> {
+		
+		/** controls behavior on read encountered element mismatching
+		 *	targed data type												*/
+		static constexpr auto mismatch = 
+				cojson::default_config::mismatch_is::skipped;
+		/** controls size of temporary buffer								*/
+		static constexpr unsigned temporary_size = 32;
+		/** controls implementation of temp buffer, used for reading names  */ 
+		static constexpr auto temporary_static = false; 
+	};	
+}

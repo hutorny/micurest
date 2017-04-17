@@ -18,9 +18,7 @@
  * along with the COJSON Library; if not, see
  * <http://www.gnu.org/licenses/gpl-2.0.html>.
  */
-
-#ifndef TOOLS_TEST_HPP_
-#define TOOLS_TEST_HPP_
+#pragma once
 #include <string.h>
 #include "common.hpp"
 
@@ -198,22 +196,9 @@ struct integer_limits_names<const char32_t*> {
 	static inline const char32_t* pot() { return U"pot"; }
 };
 
-template<>
-struct integer_limits_names<progmem<char>> {
-	static inline progmem<char> min() {
-		static const char s[] __attribute__((progmem)) ="min";
-		return progmem<char>(s);
-	}
-	static inline progmem<char> max() {
-		static const char s[] __attribute__((progmem)) ="max";
-		return progmem<char>(s);
-	}
-	static inline progmem<char> pot() {
-		static const char s[] __attribute__((progmem)) ="pot";
-		return progmem<char>(s);
-	}
-};
-
+#if __AVR__
+#	include "test_progmem.hpp"
+#endif
 
 template<typename T>
 struct integer_limits : integer_limits_names<cstring> {
@@ -413,7 +398,7 @@ struct register_specifier<char32_t> {
 #else
 #define _M_(n) template<> const char_t pstring<(_T_+n)>::str[]
 #endif
-#define _P_(n) cstring(pstring<(_T_+n)>::str)
+#define _P_(n) static_cast<cstring>(pstring<(_T_+n)>::str)
 
 #ifdef COJSON_TEST_OMIT_NAMES
 #	define OMIT(s) tstring(nullptr)
@@ -424,5 +409,3 @@ struct register_specifier<char32_t> {
 #		define OMIT(s) (s)
 #	endif
 #endif
-
-#endif /* TOOLS_TEST_HPP_ */

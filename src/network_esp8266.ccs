@@ -1,0 +1,8 @@
+#pragma once
+#include "ccs.hpp"
+
+namespace micurest {
+namespace network_esp {
+namespace tcp {
+	class server;
+}}}

@@ -22,6 +22,7 @@ extern "C" {
 #	include "user.h"
 }
 
+#include "access_log.hpp"
 #include "network_esp8266.hpp"
 
 static constexpr const char* proto_name(espconn_type p) noexcept {
@@ -29,6 +30,13 @@ static constexpr const char* proto_name(espconn_type p) noexcept {
 }
 
 namespace micurest {
+namespace network {
+template<>
+inline void access_log::_log<esp_tcp>(const char* lbl, const esp_tcp& addr,
+														char dlm) noexcept {
+	info("%s " IPSTR "%c", lbl, IP2STR(addr.remote_ip), dlm);
+}
+}
 namespace network_esp {
 
 class ibuffer : public istream {
@@ -75,88 +83,52 @@ bool obuffer::put(char_t val) noexcept {
 	return true;
 }
 
-static inline constexpr proto::tcp* cast(espconn* conn) noexcept {
-	return static_cast<proto::tcp*>(conn->reverse);
+static inline constexpr tcp::server* cast(espconn* conn) noexcept {
+	return static_cast<tcp::server*>(conn->reverse);
 }
 
 static inline constexpr espconn* cast(void *arg) noexcept {
 	return static_cast<espconn*>(arg);
 }
 
-/***************************************************************************/
-struct accesslog : miculog::log<miculog::level::warn> { //TODO use configurable value instead of miculog::level::info
-	using level = miculog::level;
-	template<class C>
-	inline static void log(const char* method, const C& c, const char*, ...) noexcept
-									__attribute__ ((format (printf, 3, 4)));
-	template<class C>
-	inline static void trace(const char* method, const C& c, const char*, ...) noexcept
-									__attribute__ ((format (printf, 3, 4)));
-	template<class C>
-	inline static void log(const char*  method, const C& c) noexcept;
-protected:
-	template<class C>
-	static void log(const C& c) noexcept;
-};
-
-template<>
-void accesslog::log<esp_tcp>(const esp_tcp& c) noexcept;
-
-template<>
-inline void accesslog::trace<esp_tcp>(const char* method,
-							const esp_tcp& c, const char* fmt, ...) noexcept {
-	if( lvl == level::trace ) {
-		info("%s", method);
-		log(c);
-		va_list args;
-		va_start(args, fmt);
-		vmsg(lvl, fmt, args);
-		va_end(args);
-	}
-}
-
-template<>
-inline void accesslog::log<esp_tcp>(const char* method,
-							const esp_tcp& c, const char* fmt, ...) noexcept {
-	if( lvl <= level::info ) {
-		info("%s", method);
-		log(c);
-		va_list args;
-		va_start(args, fmt);
-		vmsg(lvl, fmt, args);
-		va_end(args);
-	}
-}
-
-
-template<>
-inline void accesslog::log<esp_tcp>(const char* method,
-												const esp_tcp& c) noexcept {
-	if( lvl <= level::info ) {
-		info("%s", method);
-		log(c);
-		info("\n");
-	}
-}
-
-
 /* generic purpose log to console */
-extern miculog::log<miculog::level::warn> log;
-extern accesslog access;
+static const miculog::Log<tcp::server> log;
+static const network::access_log access;
 /***************************************************************************/
 
 static constexpr size_t maxconn = 5; //TODO make maxconn configurable
 static constexpr size_t closequ_len = 8; //TODO make closequ_len configurable
 using micurest::details::httpmessage;
 
+
+struct endpoint {
+	port_t port;
+	ip_addr ip;
+	bool inline constexpr operator==(const endpoint& that) const noexcept {
+		return that.ip.addr == ip.addr && that.port == port;
+	}
+};
+
+
+template<typename T>
+static inline constexpr ip_addr ipaddr(T (&adr)[4]) noexcept {
+	typedef decltype(ip_addr::addr) ip_addr_t;
+	return {
+		(static_cast<ip_addr_t>(adr[0]))
+	  |	(static_cast<ip_addr_t>(adr[1])>>8)
+	  | (static_cast<ip_addr_t>(adr[2])>>16)
+	  | (static_cast<ip_addr_t>(adr[3])>>24) };
+}
+
+
 /* HTTP state for 5 connections at most */
 details::map<endpoint, httpmessage::state_pdo, maxconn> httpstate = {};
 
 
 /******************************************************************************/
-namespace proto {
+namespace tcp {
 
-void tcp::keep() noexcept {
+void server::keep() noexcept {
 	/* by default connection option is close and callback - keep */
 	sint8 res = espconn_set_opt(&con, ESPCONN_KEEPALIVE);
 	log.warn_if(res,"espconn_set_opt error %d\n", res);
@@ -164,25 +136,25 @@ void tcp::keep() noexcept {
 	log.warn_if(res,"espconn_regist_sentcb error %d\n", res);
 }
 
-void tcp::nokeep() noexcept {
+void server::nokeep() noexcept {
 	sint8 res = espconn_clear_opt(&con, ESPCONN_KEEPALIVE);
 	log.warn_if(res,"espconn_clear_opt error %d\n", res);
 	res = espconn_regist_sentcb(&con, &on::sent);
 	log.warn_if(res,"espconn_regist_sentcb error %d\n", res);
 }
 
-bool tcp::listen(port_t port) noexcept {
+bool server::listen(port_t port) noexcept {
 	con.type = ESPCONN_TCP;
 	con.proto.tcp = &tpc;
 	con.state = ESPCONN_NONE;
 	tpc.local_port = port;
 	con.reverse = this;
 	sint8 res =	espconn_regist_connectcb(&con, &on::connect);
-	log.err_if(res, "espconn_regist_* error %d\n", res);
+	log.error_if(res, "espconn_regist_* error %d\n", res);
 	return accept();
 }
 
-void tcp::receive(const void* data, size_t len) noexcept {
+void server::receive(const void* data, size_t len) noexcept {
 	//FIXME make configurable static/automatic
 	static char buff[mtu_size]; /*
 		* output buffer is shared											*
@@ -190,14 +162,14 @@ void tcp::receive(const void* data, size_t len) noexcept {
 		* in esp8266 non os sdk it is safe because							*
 		* no concurrent callbacks  possible 								*/
 	typedef application::result_t result_t;
-	access.trace(__func__, *con.proto.tcp, " [%d]\n", len);
+	access.log(__func__, *con.proto.tcp, " [%d]\n", len);
 	ibuffer in((const char*)data, len);
 	obuffer out(buff);
 	httpmessage::state_pdo* pdo = httpstate.find(
 		endpoint{(port_t)con.proto.tcp->remote_port,
 				  ipaddr(con.proto.tcp->remote_ip)}
 	);
-	result_t res = app->service(in, out, pdo);
+	result_t res = app.service(in, out, pdo);
 	if( res == result_t::keep ||  res == result_t::fragment)
 		keep();
 	else
@@ -209,21 +181,21 @@ void tcp::receive(const void* data, size_t len) noexcept {
 	}
 }
 
-void tcp::send(const void* data, size_t size) noexcept {
+void server::send(const void* data, size_t size) noexcept {
 	access.log(__func__, *con.proto.tcp, " [%u]\n", size);
 //	os_delay_us(5000);
 	sint8 res = espconn_send(&con,(uint8 *)data, size);
 	log.warn_if(res, "espconn_send error %d", res);
 }
 
-void tcp::close() noexcept {
+void server::close() noexcept {
 	sint8 res = -1;
-	access.trace("disconnecting",*con.proto.tcp," state=%d\n",con.state);
+	access.log("disconnecting",*con.proto.tcp," state=%d\n",con.state);
 	res = espconn_disconnect(&con);
 	log.warn_if(res, "espconn_disconnect error %d\n", res);
 }
 
-void tcp::on::connect(void *arg) noexcept {
+void server::on::connect(void *arg) noexcept {
 	access.log(__func__, *cast(arg)->proto.tcp);
 	espconn_regist_recvcb(cast(arg), &received);
 	espconn_regist_sentcb(cast(arg), &sent);
@@ -232,27 +204,27 @@ void tcp::on::connect(void *arg) noexcept {
 	espconn_regist_time(cast(arg), timeout, 1);
 }
 
-void tcp::on::received(void *arg, char *data, unsigned short len) noexcept {
+void server::on::received(void *arg, char *data, unsigned short len) noexcept {
 	access.log(__func__, *cast(arg)->proto.tcp, " [%d]\n", len);
-	tcp* soc = cast(cast(arg));
+	server* soc = cast(cast(arg));
 	if( soc ) {
 		soc->receive(const_cast<const char*>(data), len);
 	}
 }
 
-void tcp::on::error(void *arg, sint8 err) noexcept {
+void server::on::error(void *arg, sint8 err) noexcept {
 	access.log(__func__, *cast(arg)->proto.tcp);
 	log.error("connection error %d\n", err);
 	if( cast(arg)->state == ESPCONN_CLOSE ) {
 		espconn_regist_time(cast(arg), 1, 1);
 		return;
 	}
-	tcp* soc = cast(cast(arg));
+	server* soc = cast(cast(arg));
 	if( soc ) soc->close();
 	else espconn_secure_disconnect(cast(arg)); /* fallback */
 }
 
-void tcp::on::disconnect(void *arg) noexcept {
+void server::on::disconnect(void *arg) noexcept {
 	access.log(__func__, *cast(arg)->proto.tcp);
 	httpmessage::state_pdo* pdo = httpstate.find(
 		endpoint{(port_t)cast(arg)->proto.tcp->remote_port,
@@ -260,7 +232,7 @@ void tcp::on::disconnect(void *arg) noexcept {
 	if( pdo ) pdo->clear();
 }
 
-void tcp::on::sent(void *arg) noexcept {
+void server::on::sent(void *arg) noexcept {
 	/* 1. esp8266 non-os sdk reference states:
 	 *    Do not call espconn_disconnect in any espconn callback
 	 *    if needed, please use system_os_task
@@ -272,7 +244,7 @@ void tcp::on::sent(void *arg) noexcept {
 	 */
 
 	access.log(__func__, *cast(arg)->proto.tcp);
-	tcp* soc = cast(cast(arg));
+	server* soc = cast(cast(arg));
 	if( soc ) soc->close();
 	else {
 		log.warn("fallback to espconn_secure_disconnect\n");
@@ -280,30 +252,31 @@ void tcp::on::sent(void *arg) noexcept {
 	}
 }
 
-void tcp::on::sending(void *arg) noexcept {
+void server::on::sending(void *arg) noexcept {
 	access.trace(__func__, *cast(arg)->proto.tcp,"\n");
 }
 
-bool tcp::accept() noexcept {
+bool server::accept() noexcept {
 	sint8 res = espconn_accept(&con);
-	log.err_if(res, "espconn_accept error %d\n", res);
+	log.error_if(res, "espconn_accept error %d\n", res);
 	if( res ) return false;
 	return true;
 }
-
-void tlsbase::send(const char* data, size_t size) noexcept {
+}
+namespace tls {
+void proto::send(const char* data, size_t size) noexcept {
 	access.log(__func__, *con.proto.tcp, " [%u]\n", size);
 	sint8 res = espconn_secure_send(&con,(uint8 *)data, size);
 	log.warn_if(res, "espconn_secure_send error %d\n", res);
 }
 
-void tlsbase::close() noexcept {
+void proto::close() noexcept {
 	access.trace("disconnecting secure",*con.proto.tcp," state=%d\n",con.state);
 	sint8 res = espconn_secure_disconnect(&con);
 	log.warn_if(res, "espconn_secure_disconnect %d\n", res);
 }
 
-bool tlsbase::accept() noexcept {
+bool proto::accept() noexcept {
 	if( ! espconn_secure_set_default_certificate(cert, cert_len) )
 		log.error("espconn_secure_set_default_certificate failed\n");
 	if( ! espconn_secure_set_default_private_key(key, key_len) )
@@ -311,11 +284,6 @@ bool tlsbase::accept() noexcept {
 	return ! espconn_secure_accept(&con);
 }
 
-}
-template<>
-void accesslog::log<esp_tcp>(const esp_tcp &c) noexcept {
-	ets_printf(" %u.%u.%u.%u:%u", c.remote_ip[0], c.remote_ip[1],
-						  c.remote_ip[2], c.remote_ip[3], c.remote_port);
 }
 
 }}
