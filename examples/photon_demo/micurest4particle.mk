@@ -32,20 +32,26 @@ network_spark_socket.hpp													\
 TRUNK = https://github.com/hutorny/micurest/trunk
 TARGET_DIR = user/library/micurest/
 LIBFILES = $(addprefix $(TARGET_DIR),$(SRC))
-EXAMPLES = user/application/micurest_demo user/application/micurest_snip
+EXAMPLES = user/applications/micurest_demo user/applications/micurest_snip
 
-all: $(LIBFILES) $(EXAMPLES)
+all: $(LIBFILES) $(EXAMPLES) $(addsuffix /micurest,$(EXAMPLES))
 
 $(TARGET_DIR):
 	@mkdir -p $@
 
-user/application/micurest_demo:
+user/applications/micurest_demo:
 	@mkdir -p $@
 	svn export --force -q $(TRUNK)/examples/photon_demo $@
 
-user/application/micurest_snip:
+user/applications/micurest_demo/micurest: | user/applications/micurest_demo
+	@ln -s $(realpath $(TARGET_DIR)) $@
+
+user/applications/micurest_snip:
 	@mkdir -p $@
 	svn export --force -q $(TRUNK)/examples/photon_rest $@
+
+user/applications/micurest_snip/micurest: | user/applications/micurest_snip
+	@ln -s $(realpath $(TARGET_DIR)) $(shell pwd)/$@
 
 $(TARGET_DIR)LICENSE: | $(TARGET_DIR)
 	svn export  --force -q $(TRUNK)/$(notdir $@) $(TARGET_DIR)
