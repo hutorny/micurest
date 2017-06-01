@@ -30,7 +30,7 @@ network_spark_socket.cpp													\
 network_spark_socket.hpp													\
 
 TRUNK = https://github.com/hutorny/micurest/trunk
-TARGET_DIR = user/library/micurest/
+TARGET_DIR = user/libraries/micurest/
 LIBFILES = $(addprefix $(TARGET_DIR),$(SRC))
 EXAMPLES = user/applications/micurest_demo user/applications/micurest_snip
 
