@@ -2,7 +2,8 @@
 
 Obtain Particle SDK
 
-`git clone https://github.com/kbowerma/particle`
+`git clone https://github.com/spark/firmware.git`
+`git checkout release/stable`
 
 Obtain and install a gcc-arm compiler (4.9 or higher)
 from [`ARM`](https://developer.arm.com/open-source/gnu-toolchain/gnu-rm/downloads)
@@ -29,7 +30,8 @@ Build photon core<br>
 `make PLATFORM=photon`
 
 Build the example application<br>
-`make PLATFORM=photon APP=micurest_snip CPPFLAGS="-std=gnu++14 -Os"`
+`make PLATFORM=photon APP=micurest_snip CPPFLAGS="-std=gnu++14 -Os -fno-exceptions -fno-rtti"`
 
 or demo application<br>
-`make PLATFORM=photon APP=micurest_demo CPPFLAGS="-std=gnu++14 -Os"`
+`make PLATFORM=photon APP=micurest_demo CPPFLAGS="-std=gnu++14 -Os -fno-exceptions -fno-rtti"`
+

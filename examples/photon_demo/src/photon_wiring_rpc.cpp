@@ -1,6 +1,8 @@
 #include "micurest/micurpc.hpp"
 #include "utils.hpp"
 #include <application.h>
+#include <Arduino.h>
+
 using namespace micurest;
 using namespace micurpc;
 

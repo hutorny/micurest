@@ -2,6 +2,7 @@
 // These values get sent to the cloud on connection and help dashboard.particle.io do the right thing
 //
 #include "application.h"
+#include "Arduino.h"
 #include "Serial2/Serial2.h"
 #include "system_network.h"
 #include "wlan_hal.h"
